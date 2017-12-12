@@ -1,0 +1,200 @@
+.cloanexpress{
+    position: relative;
+    overflow-x: hidden;
+    height: 600px;
+    background-color: rgba(0,0,0,0.1);
+}
+.loan-main{
+    position: relative;
+    height: 100%;
+}
+.cloanexpress .step{
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    padding:30px;
+}
+
+#step1{
+    z-index: 12;
+    background-color: green;
+}
+#step2{
+    background-color: yellow;
+    z-index: 11;
+}
+#step3{
+    background-color: blue;
+    z-index: 10;
+}
+#step1 .slider-wapper{
+    display: block;
+    background: #fff;
+    padding: 20px 0;
+    color: #383838;
+    margin: 20px auto;
+    border-radius: 5px;
+    box-shadow: 0 7px 17px rgba(0,0,0,.33), 0 2px 3px rgba(0,0,0,.49);
+    margin-bottom: 20px;
+    text-align: center;
+    max-width: 537px;
+    position: relative;
+    margin-bottom: 11px;
+}
+#step1 .slider-wapper h3{
+    margin-bottom: 3px;
+    font-size: 21px;
+    color: #258ac5;
+    margin-top: 17px;
+}
+#step1 #howmuch-num {
+    font-size: 37px;
+    font-weight: 100;
+}
+.noUi-base{
+    background-color: #d6d6d6;
+}
+.noUi-horizontal .noUi-handle{
+    background: #23a755;
+    width: 29px;
+    height: 29px;
+    cursor: pointer;
+    border-radius: 50%;
+    border:none !important;
+    box-shadow: none !important;
+    top: -10px;
+}
+.noUi-handle:after, .noUi-handle:before{
+    display: none;
+}
+.noUi-horizontal{
+    height: 10px;
+}
+.noUi-connect{
+    background-color: #238247;
+}
+.loan-slider-wapper{
+    position: relative;
+    padding: 10px;
+    margin: 0 10px;
+    height: 50px;
+    color:#a5a5a5;
+    font-size: 12px;
+}
+.loan-slider-wapper .limit{
+    position: absolute;
+    bottom: 0;
+}
+.loan-slider-wapper .loan-max{
+    right: 0;
+}
+.loan-slider-wapper .loan-min{
+    left: 0;
+}
+#select-amount-error{
+    display: inline-block;
+    margin-top: 13px;
+    color: red;
+}
+.start-steps{
+    margin: 20px 0;
+}
+.loan-indicators{
+    list-style: none;
+    margin: 0 auto;
+    position: absolute;
+    padding: 0;
+    align-items: center;
+    justify-content: center;
+    display: none;
+    z-index: 15;
+    top: 15px;
+    left: 0;
+    right: 0;
+}
+.loan-indicators li.active{
+    background-color: #214391;
+}
+.loan-indicators li{
+    margin: 0 2px;
+    font-weight: bold;
+    background-color: #37a339;
+    cursor: pointer;
+    height: 32px;
+    text-align: center;
+    width: 32px;
+    border: 2px solid white;
+    border-radius: 50%;
+    color: white;
+}
+.step h2 {
+    text-align: center;
+    font-size: 2.5em;
+    border-top: 1px solid #fff;
+    border-bottom: 1px solid #fff;
+    padding: 20px 43px;
+    position: relative;
+    margin-top: 41px;
+    color: white;
+    line-height: 1.2em;
+}
+.step h2 small{
+    color: white;
+}
+.step .step-buttons {
+    transition: all .2s ease;
+    font-size: 24px;
+    color: #238ac5;
+    border: 0;
+    border-radius: 10px;
+    box-shadow: 0 3px 15px rgba(0,0,0,.52);
+    width: 100%;
+    margin-bottom: 15px;
+    margin-top: 10px;
+    background-color: #fff;
+    text-transform: none;
+    font-weight: normal;
+}
+
+.step .step-buttons.active, .step .step-buttons:active, .step .step-buttons:focus, .step .step-buttons:active:hover{
+    border-color: #37a339 !important;
+    background-color: #37a339 !important;
+    color: white !important;
+}
+#step4 .step-buttons{
+    font-size: 14px;
+}
+.step h2.offers-now{
+    margin-top: 30px;
+    border-top: 0;
+    font-size: 1.8em;
+    padding: 5px 0 12px;
+    line-height: 31px;
+}
+.loan-offers{
+    width: 400px;
+    margin: 0 auto;
+}
+.loan-offers .loan-form-field label{
+    font-weight: 400;
+    margin-bottom: 5px;
+    font-size: 15px;
+}
+.abn-search-link{
+    font-size: 12px;
+}
+.loan-offers .loan-form-field{
+    margin: 10px 0;
+}
+.leadbox-title {
+    font-weight: bold;
+    display: block;
+    font-size: 1.2em;
+    text-transform: capitalize;
+    margin-bottom: 2px;
+    margin-top: 8px;
+}

@@ -1,0 +1,146 @@
+<?php
+/**
+ * OnlineBiz Software Solution
+ * 
+ * @project lendclick.com.au
+ * @version 0.0.1
+ * @encoding UTF-8
+ * @author Joe Vu<joe@onlinebizsoft.com>
+ * @see http://onlinebizsoft.com
+ * @copyright (c) 2017 , OnlineBiz Software Solution
+ * 
+ * Create at: Nov 30, 2017 11:24:47 AM
+ */
+?>
+<script type="text/javascript">
+    var loanConfig = '';
+
+    jQuery(document).ready(function() {
+        jQuery('#search-lender-btn').click(function() {
+            var data = new FormData();
+            data.append('action', 'search_lender');
+            data.append('lender_amount', 3000);
+            data.append('lender_term', '6-12')
+            data.append('lender_products', '1');
+            jQuery.ajax({
+                type: 'POST',
+                url: ajaxurl,
+                processData: false,
+                contentType: false,
+                data: data,
+                success: function(resp) {
+                }
+            });
+        });
+    });
+</script>
+<div class="cloanexpress">
+    <div class="loan-main">
+        <ol class="loan-indicators">
+            <li data-step="#step1" onclick="loanExpress.step(this)" class="active">1</li>
+            <li data-step="#step2" onclick="loanExpress.step(this)">2</li>
+            <li data-step="#step3" onclick="loanExpress.step(this)">3</li>
+            <li data-step="#step4" onclick="loanExpress.step(this)">4</li>
+        </ol>
+        <div id="step1" class="step" data-valid="false">
+            <div class="slider-wapper">
+                <h3>Choose Loan Amount</h3>
+                <div id="howmuch-num">$5,000-$500,000,000</div>
+                <div class="loan-slider-wapper">
+                    <div id="loan-slider"></div>
+                    <span class="loan-min limit">$5,000</span>
+                    <span class="loan-max limit">$1,000,000,000</span>
+                    <span id="select-amount-error" style="display: none">Please Choose Loan Amount</span>
+                </div>
+                <a class="btn btn-success btn-lg start-steps" id="main-button" href="javascript:void()" onclick="loanExpress.stepLoanSlider(this)"  role="button" style="box-shadow: rgba(0, 0, 0, 0.46) 0px 4px 8px;">Check Eligibility</a>
+            </div>
+        </div>
+        <div id="step2" class="step" data-valid="false">
+            <h2>Time of business operating?</h2>
+            <div class="row">
+                <div class="text-center answers-section" style=" margin-top: 28px; ">
+                    <div class="col-md-4">
+                        <a class="btn btn-default btn-lg step-buttons" data-val="Less than 3 months" onclick="loanExpress.stepLoanTerms(this)">Less than 3 months</a>
+                    </div>
+                    <div class="col-md-4">
+                        <a class="btn btn-default btn-lg step-buttons" data-val="3-5 months" onclick="loanExpress.stepLoanTerms(this)">3-5 months</a>
+                    </div>
+                    <div class="col-md-4">
+                        <a class="btn btn-default btn-lg step-buttons" data-val="6-12 months" onclick="loanExpress.stepLoanTerms(this)">6-12 months</a>
+                    </div>
+                    <div class="col-md-4">
+                        <a class="btn btn-default btn-lg step-buttons" data-val="1-2 years" onclick="loanExpress.stepLoanTerms(this)">1-2 years</a>
+                    </div>
+                    <div class="col-md-4">
+                        <a class="btn btn-default btn-lg step-buttons" data-val="3-5 years" onclick="loanExpress.stepLoanTerms(this)">3-5 years</a>
+                    </div>
+                    <div class="col-md-4">
+                        <a class="btn btn-default btn-lg step-buttons" data-val="More than 5 years" onclick="loanExpress.stepLoanTerms(this)">More than 5 years</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div id="step3" class="step" data-valid="false">
+            <h2>Monthly revenue? <br/><small>(average over past 6 months)</small></h2>
+            <div class="row">
+                <div class="text-center answers-section" style=" margin-top: 28px; ">
+                    <div class="col-md-4">
+                        <a class="btn btn-default btn-lg step-buttons" data-val="$0 - $10k" onclick="loanExpress.stepLoanAverageRevenue(this)">$0 - $10k</a>
+                    </div>
+                    <div class="col-md-4">
+                        <a class="btn btn-default btn-lg step-buttons" data-val="$10k - $25k" onclick="loanExpress.stepLoanAverageRevenue(this)">$10k - $25k</a>
+                    </div>
+                    <div class="col-md-4">
+                        <a class="btn btn-default btn-lg step-buttons" data-val="$100k - $250k" onclick="loanExpress.stepLoanAverageRevenue(this)">$100k - $250k</a>
+                    </div>
+                    <div class="col-md-4">
+                        <a class="btn btn-default btn-lg step-buttons" data-val="$250k - $500k" onclick="loanExpress.stepLoanAverageRevenue(this)">$250k - $500k</a>
+                    </div>
+                    <div class="col-md-4">
+                        <a class="btn btn-default btn-lg step-buttons" data-val="$500k+" onclick="loanExpress.stepLoanAverageRevenue(this)">$500k+</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div id="step4" class="step" data-valid="false">
+            <h2 class="offers-now">
+                <span class="leadbox-title">We found relevant lenders for you!</span>
+                Get Your Loan Offers Now
+            </h2>
+            <div class="loan-offers">
+                <div class="loan-form-field">
+                    <label>Full name</label><br>
+                    <span class="wpcf7-form-control-wrap Fullname"><input type="text" name="Fullname" value="" size="40" class="wpcf7-form-control wpcf7-text wpcf7-validates-as-required loan-field" aria-required="true" aria-invalid="false" placeholder="Full name"></span>
+                </div>
+                <div class="loan-form-field">
+                    <label>Email Address</label><br>
+                    <span class="wpcf7-form-control-wrap Emailaddress"><input type="text" name="Emailaddress" value="" size="40" class="wpcf7-form-control wpcf7-text wpcf7-validates-as-required loan-field" aria-required="true" aria-invalid="false" placeholder="Email Address"></span>
+                </div>
+                <div class="loan-form-field">
+                    <label>Phone</label><br>
+                    <span class="wpcf7-form-control-wrap Phone"><input type="tel" name="Phone" value="" size="40" class="wpcf7-form-control wpcf7-text wpcf7-tel wpcf7-validates-as-required wpcf7-validates-as-tel loan-field" aria-required="true" aria-invalid="false" placeholder="Phone"></span>
+                </div>
+                <div class="loan-form-field">
+                    <label>Business Name</label><br>
+                    <span class="wpcf7-form-control-wrap Businessname"><input type="email" name="Businessname" value="" size="40" class="wpcf7-form-control wpcf7-text wpcf7-email wpcf7-validates-as-required wpcf7-validates-as-email loan-field" aria-required="true" aria-invalid="false" placeholder="Business Name"></span>
+                </div>
+                <div class="loan-form-field-checkbox">
+                    <span class="wpcf7-form-control-wrap Termandcondition">
+                        <span class="wpcf7-form-control wpcf7-checkbox wpcf7-validates-as-required loan-field">
+                            <span class="wpcf7-list-item first last">
+                                <input type="checkbox" name="Termandcondition[]" value="<?php _e('I have reviewed, understand and consent to the') ?>">
+                                <span class="wpcf7-list-item-label"><?php _e('I have reviewed, understand and consent to the') ?></span></span></span></span><a class="privacy-policy" target="_blank" href="privacy-policy/">Privacy Policy</a>
+                </div>
+                <div class="loan-form-field">
+                    <div class="submit-left">
+                        <span class="encryption">We use 256-bit encryption to protect your information</span>
+                    </div>
+                    <div class="submit-right">
+                        <input type="submit" value="Get started" class="wpcf7-form-control wpcf7-submit loan-field"><span class="ajax-loader"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
