@@ -1,7 +1,7 @@
 .cloanexpress{
     position: relative;
     overflow-x: hidden;
-    height: 600px;
+    height: 700px;
     background-color: rgba(0,0,0,0.1);
 }
 .loan-main{
@@ -30,6 +30,30 @@
 #step3{
     background-color: blue;
     z-index: 10;
+}
+#step4{
+    background-color: blue;
+    z-index: 9;
+}
+#step5{
+    background-color: blue;
+    z-index: 8;
+}
+#step6{
+    background-color: blue;
+    z-index: 7;
+}
+#step7{
+    background-color: blue;
+    z-index: 6;
+}
+#step8{
+    background-color: blue;
+    z-index: 5;
+}
+#step9{
+    background-color: blue;
+    z-index: 4;
 }
 #step1 .slider-wapper{
     display: block;
@@ -197,4 +221,57 @@
     text-transform: capitalize;
     margin-bottom: 2px;
     margin-top: 8px;
+}
+.loan-form-field .submit-right2{width: 50%;margin-right: -4px;display: inline-block;text-align: right;vertical-align: top;}
+.submit-right2 input[type="submit"] {
+    width: 130px;
+    height: 42px;
+    color: #fff;
+    border: none;
+    text-align: center;
+    border-radius: 42px;
+    -webkit-border-radius: 42px;
+    background: #248132;
+}
+.btn-next{
+    margin-top: 20px;
+}
+#birth_date_error_text,.error_input_text{
+    display: none;
+}
+.error,.error_input_text{
+    color: red;
+}
+.loan-dob{
+    width: 480px;
+    margin: 50px auto;
+}
+.loan-products, .loan-industry{
+    margin-top: 50px;
+}
+.loan-products .step-buttons.btn-product.selected {
+    background: #fff;
+    color: #1ea551;
+    opacity: 1;
+}
+.loan-products .step-buttons.btn-product {
+    background: none;
+    box-shadow: none;
+    border: 2px solid #fff;
+    color: #fff;
+    font-size: 1.4em;
+    text-align: left;
+    padding: 8px 14px;
+    opacity: 0.5;
+}
+.loan-products .step-buttons {
+    transition: all .2s ease;
+    font-size: 24px;
+    color: #238ac5;
+    border: 0;
+    border-radius: 19px;
+    box-shadow: 0 15px 34px rgba(0,0,0,.52);
+    width: 100%;
+    margin-bottom: 15px;
+    margin-top: 5px;
 }

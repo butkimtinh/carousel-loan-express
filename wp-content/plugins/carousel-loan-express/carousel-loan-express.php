@@ -25,6 +25,8 @@ class CarouselLoanExpress {
     public function init() {
         wp_register_script('noUiSlider', plugins_url('/assets/noUiSlider/nouislider.min.js', __FILE__), array('jquery'), '10.0.0');
         wp_register_script('icheck', plugins_url('/assets/icheck-1.0.2/icheck.min.js', __FILE__), array('jquery'), '1.0.2');
+        wp_register_script('jquery.validate', plugins_url('/assets/jquery-validation-1.17.0/dist/jquery.validate.min.js', __FILE__), array('jquery'), '1.17.0');
+        wp_register_script('jquery-ui-js', plugins_url('/assets/js/jquery-ui.js', __FILE__), array('jquery'), '0.0.1');
         wp_register_script('cloanexpress-js', plugins_url('/assets/js/cloanexpress.js', __FILE__), array('jquery'), '0.0.1');
         wp_register_script('cloanexpress-custom', plugins_url('/assets/js/custom.js', __FILE__), array('jquery'), '0.0.1');
         
@@ -38,9 +40,10 @@ class CarouselLoanExpress {
     public function enqueue_style() {
         wp_enqueue_script('noUiSlider');
         wp_enqueue_script('icheck');
+        wp_enqueue_script('jquery.validate');
         wp_enqueue_script('cloanexpress-js');
         wp_enqueue_script('cloanexpress-custom');
-        wp_enqueue_script('jquery-ui');
+        wp_enqueue_script('jquery-ui-js');
 
         wp_enqueue_style('noUiSlider');
         wp_enqueue_style('icheck-all');

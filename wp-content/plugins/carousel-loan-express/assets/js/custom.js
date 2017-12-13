@@ -1,5 +1,7 @@
 $(document).ready(function() {
     $('.cloanexpress input[type="checkbox"]').iCheck({
-        checkboxClass: 'icheckbox_square-green'
+        checkboxClass: 'icheckbox_square-green',
+        labelHover: false,
+        cursor: true
     });
 });
