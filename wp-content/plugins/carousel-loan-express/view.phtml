@@ -353,14 +353,14 @@
                 </div>
             </div>
         </div>
-        <div id="step8" class="step" data-valid="false" data-indicator="false" style="z-index: 1000">
+        <div id="step8" class="step" data-valid="false" data-indicator="false">
             <h2 class="small-margin-top">
                 Choose your<br><b>Industry Type</b>
             </h2>
             <div class="loan-industry">
                 <form id="industry-frm">
                     <div class="row">
-                        <div class=" col-md-8 col-md-offset-2">
+                        <div class="col-md-8 col-md-offset-2">
                             <div class="form-group input">
                                 <select id="industry_ID" name="industry_ID" class="form-control step-select" required="">
                                     <option value="">Select Industry</option>					
@@ -449,7 +449,6 @@
                                         <option value="66">Travel Agencies</option>
                                     </optgroup>
                                     <optgroup label="Utilities and Home Services">
-
                                         <option value="6">Cleaning</option>
                                         <option value="60">Landscaping Services</option>
                                         <option value="61">Other home services</option>
@@ -469,10 +468,59 @@
             </div>
         </div>
         <div id="step9" class="step" data-valid="false" data-indicator="false">
-            
+            <h2><?php _e('Driving license number') ?></h2>
+            <div class="loan-driving-license-number">
+                <div class="text-center answers-section answers-small-margin">
+                    <div class="row">
+                        <div class="col-md-8 col-md-offset-2">
+                            <div class="form-group input">
+                                <input class="form-control step-input" id="driver_license" name="driver_license" type="text" maxlength="10" placeholder="Driver License Number">
+                                <div>
+                                    <span id="driver_license_error_text" class="error_input_text" style="display: none;">Please enter your driver's license number</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-offset-4 col-md-4">
+                        <a class="btn btn-default btn-sm step-buttons" onclick="loanExpress.stepLoanDrivingLicenseNumber(this)" href="javascript:void()">Next <i class="fa fa-chevron-right" aria-hidden="true"></i></a>
+                    </div>
+                </div>
+            </div> 
         </div>
-        <div id="step10" class="step" data-valid="false" data-indicator="false">
-
+        <div id="step10" class="step" data-valid="false" data-indicator="false" style="z-index: 1000">
+            <h2 class="small-margin-top">What is your<br><b>ABN</b></h2>
+            <div class="loan-abn">
+                <div class="abn-loader">
+                    <p><i class="glyphicon glyphicon-refresh abn-loader-processing"></i> Validating ABN. please wait...</p>
+                </div>
+                <div class="text-center answers-section answers-small-margin">
+                    <div class="row">
+                        <div class="col-md-8 col-md-offset-2">
+                            <div class="form-group input abn-field-container">
+                                <input maxlength="11" class="form-control step-input" id="abn_num" name="abn_num" type="tel" placeholder="Enter your ABN" data-valid="false" onchange="loanExpress.verifyAbn(this)">
+                                <div>
+                                    <span id="abn_num_error_text" class="error_input_text">Enter a valid ABN number<br>or <a onclick="loanExpress.stepAbn(this, true)" id="skip-abn" data-slide="next" href="javascript:void()" style="text-decoration:underline;color:#000;" skip="">Skip</a></span>
+                                </div>
+                                <span class="abn-search-link">Not sure? Try search for your ABN <a style="text-decoration:underline" href="http://abr.business.gov.au" target="_blank">here</a></span>
+                            </div>
+                        </div>
+                        <div class="abn-info col-md-8 col-md-offset-2">
+                            <div class="col-md-6">
+                                <span class="abn-title">Business Legal Name</span>
+                                <span class="abn-details abn-legal-name"></span>
+                            </div>
+                            <div class="col-md-6">
+                                <span class="abn-title">Registration Date</span>
+                                <span class="abn-details abn-reg-date">1999-11-01</span>
+                            </div>
+                            <br>
+                        </div>
+                        <div class="col-md-offset-4 col-md-4">
+                            <a class="btn btn-default btn-sm step-buttons" role="button" href="javascript:void()" onclick="loanExpress.stepAbn(this,false)">Next <i class="fa fa-chevron-right" aria-hidden="true"></i></a>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
         <div id="step11" class="step" data-valid="false" data-indicator="false">
 

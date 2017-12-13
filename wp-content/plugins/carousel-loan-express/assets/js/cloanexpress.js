@@ -133,6 +133,44 @@ function LoanExpress() {
             this.nextStep(e);
         }
     };
+    this.stepLoanDrivingLicenseNumber = function(e){
+        this.data.append('loan_driving_license_number', $('[name="driver_license"]').val());
+        this.nextStep(e);
+    };
+    this.verifyAbn = function(e){
+        var q = $('[name="abn_num"]').val();
+        $('.abn-loader').show();
+        if(q.length){
+            $.ajax({
+                type: 'POST',
+                url: ajaxurl,
+                data:{action:'get_abn_info',q:q},
+                success: function(resp) {
+                     $('.abn-loader').hide();
+                    if(!resp.errno){
+                        $('.abn-search-link, #abn_num_error_text').hide();
+                        $('.abn-legal-name').html(resp.bussiness.name);
+                        $('.abn-reg-date').html(resp.bussiness.effectiveFrom);
+                        $('[name="abn_num"]').data('valid',true);
+                        $('.abn-info').show();
+                    }else{
+                        $('#abn_num_error_text, .abn-search-link').show();
+                        $('.abn-info').hide();
+                        $('[name="abn_num"]').data('valid',false);
+                    }
+                }
+            });
+        }
+    };
+    this.stepAbn = function(e, skip){
+        if(!skip){
+            var abn_num_valid = $('[name="abn_num"]').data('valid');
+            if(abn_num_valid){
+                this.data.append('loan_abn', $('[name="abn_num"]').val());
+            }
+        }
+        this.nextStep(e);
+    };
     this.nextStep = function(e) {
         var currentStep = $(e).closest('.step');
         var nextStep = currentStep.next('.step');

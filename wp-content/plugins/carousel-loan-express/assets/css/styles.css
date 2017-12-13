@@ -55,6 +55,23 @@
     background-color: blue;
     z-index: 4;
 }
+#step10{
+    background-color: blue;
+    z-index: 3;
+}
+#step11{
+    background-color: blue;
+    z-index: 2;
+}
+#step12{
+    background-color: blue;
+    z-index: 1;
+}
+#step13{
+    background-color: blue;
+    z-index: 0;
+}
+
 #step1 .slider-wapper{
     display: block;
     background: #fff;
@@ -236,7 +253,7 @@
 .btn-next{
     margin-top: 20px;
 }
-#birth_date_error_text,.error_input_text{
+#birth_date_error_text,.error_input_text, .abn-info{
     display: none;
 }
 .error,.error_input_text{
@@ -274,4 +291,20 @@
     width: 100%;
     margin-bottom: 15px;
     margin-top: 5px;
+}
+.abn-loader{
+    display: none;
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 1000;
+    background-color: rgba(0,0,0,0.8);
+    text-align: center;
+    color: white;
+    font-size: 20px;
+    padding-top: 25%;
 }

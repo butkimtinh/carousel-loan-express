@@ -20,6 +20,9 @@ class CarouselLoanExpress {
         }
         add_action("wp_ajax_search_lender", array($this, 'search_lender'));
         add_action("wp_ajax_nopriv_search_lender", array($this, 'search_lender'));
+
+        add_action('wp_ajax_get_abn_info', array($this, 'get_abn_info'));    // If called from admin panel
+        add_action('wp_ajax_nopriv_get_abn_info', array($this, 'get_abn_info'));    // If called from front end
     }
 
     public function init() {
@@ -29,7 +32,7 @@ class CarouselLoanExpress {
         wp_register_script('jquery-ui-js', plugins_url('/assets/js/jquery-ui.js', __FILE__), array('jquery'), '0.0.1');
         wp_register_script('cloanexpress-js', plugins_url('/assets/js/cloanexpress.js', __FILE__), array('jquery'), '0.0.1');
         wp_register_script('cloanexpress-custom', plugins_url('/assets/js/custom.js', __FILE__), array('jquery'), '0.0.1');
-        
+
         wp_register_style('noUiSlider', plugins_url('/assets/noUiSlider/nouislider.min.css', __FILE__), false, '10.0.0', 'all');
         wp_register_style('icheck-all', plugins_url('/assets/icheck-1.0.2/skins/all.css', __FILE__), false, '1.0.2', 'all');
         wp_register_style('cloanexpress-styles', plugins_url('/assets/css/styles.css', __FILE__), false, '0.0.1', 'all');
@@ -89,12 +92,110 @@ class CarouselLoanExpress {
 
         $lender_amount_min = isset($_POST['lender_amount_min']) ? $_POST['lender_amount_min'] : '';
         update_post_meta($post_id, 'lender_amount_min', $lender_amount_min);
-      
+
         $lender_amount_max = isset($_POST['lender_amount_max']) ? $_POST['lender_amount_max'] : '';
         update_post_meta($post_id, 'lender_amount_max', $lender_amount_max);
-      
+
         $lender_webhook = isset($_POST['lender_webhook']) ? $_POST['lender_webhook'] : '';
         update_post_meta($post_id, 'lender_webhook', $lender_webhook);
+    }
+
+    public function getAbnInfo($abn) {
+        $data = array('errno' => 1, 'msg' => __('Are you sure this is the correct ABN number?'));
+        $guid = 'a2a0c3fb-c364-44af-bae4-f21ad2405265';
+        $wsdl = 'http://abr.business.gov.au/abrxmlsearch/ABRXMLSearch.asmx?WSDL';
+        $params = array(
+            'soap_version' => SOAP_1_1,
+            'exceptions' => true,
+            'trace' => 1,
+            'cache_wsdl' => WSDL_CACHE_NONE
+        );
+        $soap = new SoapClient($wsdl, $params);
+
+        $params = new stdClass();
+        $params->searchString = $abn;
+        $params->includeHistoricalDetails = 'N';
+        $params->authenticationGuid = $guid;
+        if ($result = $soap->ABRSearchByABN($params)) {
+            $respone = $result->ABRPayloadSearchResults->response;
+            if ($respone->exception) {
+                $data['msg'] = $respone->exception->exceptionDescription;
+            } else {
+                if ($businessEntity = $respone->businessEntity) {
+                    if ($businessEntity->legalName) {
+                        $name = $businessEntity->legalName;
+                    } elseif ($businessEntity->mainTradingName) {
+                        $name = $businessEntity->mainTradingName->organisationName;
+                    } elseif ($businessEntity->mainName) {
+                        $name = $businessEntity->mainName->organisationName;
+                    }
+                    $bussinessData = array();
+                    $bussinessData['id'] = $abn;
+                    $bussinessData['name'] = $name;
+                    if ($businessEntity->mainBusinessPhysicalAddress) {
+                        $bussinessData['stateCode'] = $businessEntity->mainBusinessPhysicalAddress->stateCode;
+                        $bussinessData['stateName'] = $this->getStateName($bussinessData['stateCode']);
+                        $bussinessData['postcode'] = $businessEntity->mainBusinessPhysicalAddress->postcode;
+                    }
+                    if($businessEntity->entityStatus){
+                        $bussinessData['effectiveFrom'] = $businessEntity->entityStatus->effectiveFrom;
+                    }
+                    $data['bussiness'] = $bussinessData;
+                    $data['errno'] = 0;
+                    $data['msg'] = 'Success';
+                }
+            }
+        }
+        return $data;
+    }
+
+    public function getStateName($statecode) {
+        $name = '';
+        switch ($statecode) {
+            case 'NSW': {
+                    $name = 'New South Wales';
+                    break;
+                }
+            case 'ACT': {
+                    $name = 'Australian Capital Territory';
+                    break;
+                }
+            case 'VIC': {
+                    $name = 'Victoria';
+                    break;
+                }
+            case 'QLD': {
+                    $name = 'Queensland';
+                    break;
+                }
+            case 'SA': {
+                    $name = 'South Australia';
+                    break;
+                }
+            case 'WA': {
+                    $name = 'Western Australia';
+                    break;
+                }
+            case 'TAS': {
+                    $name = 'Tasmania';
+                    break;
+                }
+            case 'NT': {
+                    $name = 'Northern Territory';
+                    break;
+                }
+        }
+        return $name;
+    }
+    public function get_abn_info() {
+        $data = array();
+        $q = isset($_POST['q']) ? trim($_POST['q']) : false;
+        if ($q) {
+            $data = $this->getAbnInfo($q);
+        }
+        header('Content-Type: application/json');
+        echo json_encode($data);
+        die;
     }
 
     public function search_lender() {
@@ -115,13 +216,13 @@ class CarouselLoanExpress {
                 array(
                     array(
                         'key' => 'lender_amount_min',
-                        'value' => (int)$lender_amount,
+                        'value' => (int) $lender_amount,
                         'compare' => '<',
                         'type' => 'UNSIGNED',
                     ),
                     array(
                         'key' => 'lender_amount_max',
-                        'value' => (int)$lender_amount,
+                        'value' => (int) $lender_amount,
                         'compare' => '>=',
                         'type' => 'UNSIGNED',
                     )
@@ -136,7 +237,8 @@ class CarouselLoanExpress {
                 'value' => $lender_term,
             );
         }
-        $lender_products = isset($_POST['lender_products']) ? $_POST['lender_products'] : false;;
+        $lender_products = isset($_POST['lender_products']) ? $_POST['lender_products'] : false;
+        ;
         if ($lender_products) {
             $itmes = explode(',', $lender_products);
             foreach ($itmes as $k) {
@@ -147,16 +249,16 @@ class CarouselLoanExpress {
             }
         }
         $query = new WP_Query($args);
-        
-        if($query->have_posts()){
+
+        if ($query->have_posts()) {
             $data['errno'] = 0;
             $data['msg'] = 'Request is success';
             $data['count'] = $query->found_posts;
-            
+
             $lenders = array();
-            while ($query->have_posts()){
+            while ($query->have_posts()) {
                 $query->the_post();
-                $featured_img_url = get_the_post_thumbnail_url(get_the_ID(),'full'); 
+                $featured_img_url = get_the_post_thumbnail_url(get_the_ID(), 'full');
                 $lenders[] = array(
                     'ID' => $post->ID,
                     'title' => get_the_title(),
@@ -164,10 +266,10 @@ class CarouselLoanExpress {
                     'phone' => get_post_meta($post->ID, 'lender_phone', true),
                     'term' => get_post_meta($post->ID, 'lender_term', true),
                     'thumbnail' => $featured_img_url,
-                    'amount' => sprintf('%s - %s', get_post_meta($post->ID, 'lender_amount_min', true), get_post_meta($post->ID, 'lender_amount_max', true)) 
+                    'amount' => sprintf('%s - %s', get_post_meta($post->ID, 'lender_amount_min', true), get_post_meta($post->ID, 'lender_amount_max', true))
                 );
             }
-            $data['lenders'] = $lenders; 
+            $data['lenders'] = $lenders;
         }
         echo json_encode($data);
         die;
