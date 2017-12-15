@@ -292,7 +292,7 @@
     margin-bottom: 15px;
     margin-top: 5px;
 }
-.abn-loader{
+.abn-loader, .lender-loader{
     display: none;
     position: absolute;
     width: 100%;
@@ -307,4 +307,31 @@
     color: white;
     font-size: 20px;
     padding-top: 25%;
+}
+table.lender-info{
+    border: none;
+    font-size: 12px;
+}
+table.lender-info td{
+    padding: 3px;
+    border:none;
+}
+.lender-box{
+    padding: 10px;
+    cursor: pointer;
+}
+.lender-box:hover{
+    background-color: white;
+}
+.lender-box.active{
+     background-color: white;
+}
+.lender-label{
+    color: #3c4d6b;
+    font-weight: bold;
+}
+.loan-lenders .modal{
+    position: absolute;
+    top: 50px;
+    z-index: 1000;
 }

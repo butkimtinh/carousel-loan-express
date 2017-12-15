@@ -304,22 +304,22 @@
                 <div class="row">
                     <div class="text-center">
                         <div class="col-md-6">
-                            <a class="btn btn-default btn-lg step-buttons active" data-val="<?php _e('Unsecured Business Loans') ?>" onclick="loanExpress.selectProduct(this)"><?php _e('Unsecured Business Loans') ?></a>
+                            <a class="btn btn-default btn-lg step-buttons active" data-val="0" onclick="loanExpress.selectProduct(this)"><?php _e('Unsecured Business Loans') ?></a>
                         </div>
                         <div class="col-md-6">
-                            <a class="btn btn-default btn-lg step-buttons active" data-val="<?php _e('Invoice Finance') ?>" onclick="loanExpress.selectProduct(this)"><?php _e('Invoice Finance') ?></a>
+                            <a class="btn btn-default btn-lg step-buttons active" data-val="1" onclick="loanExpress.selectProduct(this)"><?php _e('Invoice Finance') ?></a>
                         </div>
                         <div class="col-md-6">
-                            <a class="btn btn-default btn-lg step-buttons active" data-val="<?php _e('Line of Credit / Trade Finance') ?>" onclick="loanExpress.selectProduct(this)"><?php _e('Line of Credit / Trade Finance') ?></a>
+                            <a class="btn btn-default btn-lg step-buttons active" data-val="2" onclick="loanExpress.selectProduct(this)"><?php _e('Line of Credit / Trade Finance') ?></a>
                         </div>
                         <div class="col-md-6">
-                            <a class="btn btn-default btn-lg step-buttons active" data-val="<?php _e('Equipment Finance') ?>" onclick="loanExpress.selectProduct(this)"><?php _e('Equipment Finance') ?></a>
+                            <a class="btn btn-default btn-lg step-buttons active" data-val="3" onclick="loanExpress.selectProduct(this)"><?php _e('Equipment Finance') ?></a>
                         </div>
                         <div class="col-md-6">
-                            <a class="btn btn-default btn-lg step-buttons active" data-val="<?php _e('Vehicle Finance') ?>" onclick="loanExpress.selectProduct(this)"><?php _e('Vehicle Finance') ?></a>
+                            <a class="btn btn-default btn-lg step-buttons active" data-val="4" onclick="loanExpress.selectProduct(this)"><?php _e('Vehicle Finance') ?></a>
                         </div>
                         <div class="col-md-6">
-                            <a class="btn btn-default btn-lg step-buttons active" data-val="<?php _e('Property Development Finance') ?>" onclick="loanExpress.selectProduct(this)"><?php _e('Property Development Finance') ?></a>
+                            <a class="btn btn-default btn-lg step-buttons active" data-val="5" onclick="loanExpress.selectProduct(this)"><?php _e('Property Development Finance') ?></a>
                         </div>
                     </div>
 
@@ -456,7 +456,7 @@
                                     </optgroup>
                                 </select>
                                 <div>
-                                    <span id="industry_name_error_text" class="error_input_text">Please select an industry</span>
+                                    <span id="industry_name_error_text" class="error_input_text"><?php _e('Please select an industry') ?></span>
                                 </div>
                             </div>
                         </div>
@@ -474,9 +474,9 @@
                     <div class="row">
                         <div class="col-md-8 col-md-offset-2">
                             <div class="form-group input">
-                                <input class="form-control step-input" id="driver_license" name="driver_license" type="text" maxlength="10" placeholder="Driver License Number">
+                                <input class="form-control step-input" id="driver_license" name="driver_license" type="text" maxlength="10" placeholder="<?php _e('Driver License Number') ?>">
                                 <div>
-                                    <span id="driver_license_error_text" class="error_input_text" style="display: none;">Please enter your driver's license number</span>
+                                    <span id="driver_license_error_text" class="error_input_text" style="display: none;"><?php _e('Please enter your driver\'s license number') ?></span>
                                 </div>
                             </div>
                         </div>
@@ -487,11 +487,11 @@
                 </div>
             </div> 
         </div>
-        <div id="step10" class="step" data-valid="false" data-indicator="false" style="z-index: 1000">
+        <div id="step10" class="step" data-valid="false" data-indicator="false">
             <h2 class="small-margin-top">What is your<br><b>ABN</b></h2>
             <div class="loan-abn">
                 <div class="abn-loader">
-                    <p><i class="glyphicon glyphicon-refresh abn-loader-processing"></i> Validating ABN. please wait...</p>
+                    <p><i class="glyphicon glyphicon-refresh abn-loader-processing"></i> <?php _e('Validating ABN. please wait...') ?></p>
                 </div>
                 <div class="text-center answers-section answers-small-margin">
                     <div class="row">
@@ -499,31 +499,59 @@
                             <div class="form-group input abn-field-container">
                                 <input maxlength="11" class="form-control step-input" id="abn_num" name="abn_num" type="tel" placeholder="Enter your ABN" data-valid="false" onchange="loanExpress.verifyAbn(this)">
                                 <div>
-                                    <span id="abn_num_error_text" class="error_input_text">Enter a valid ABN number<br>or <a onclick="loanExpress.stepAbn(this, true)" id="skip-abn" data-slide="next" href="javascript:void()" style="text-decoration:underline;color:#000;" skip="">Skip</a></span>
+                                    <span id="abn_num_error_text" class="error_input_text"><?php _e('Enter a valid ABN number') ?><br>or <a onclick="loanExpress.stepAbn(this, true)" id="skip-abn" data-slide="next" href="javascript:void()" style="text-decoration:underline;color:#000;" skip="">Skip</a></span>
                                 </div>
-                                <span class="abn-search-link">Not sure? Try search for your ABN <a style="text-decoration:underline" href="http://abr.business.gov.au" target="_blank">here</a></span>
+                                <span class="abn-search-link"><?php _e('Not sure? Try search for your ABN') ?> <a style="text-decoration:underline" href="http://abr.business.gov.au" target="_blank">here</a></span>
                             </div>
                         </div>
                         <div class="abn-info col-md-8 col-md-offset-2">
                             <div class="col-md-6">
-                                <span class="abn-title">Business Legal Name</span>
+                                <span class="abn-title"><?php _e('Business Legal Name') ?></span>
                                 <span class="abn-details abn-legal-name"></span>
                             </div>
                             <div class="col-md-6">
-                                <span class="abn-title">Registration Date</span>
+                                <span class="abn-title"><?php _e('Registration Date') ?></span>
                                 <span class="abn-details abn-reg-date">1999-11-01</span>
                             </div>
                             <br>
                         </div>
                         <div class="col-md-offset-4 col-md-4">
-                            <a class="btn btn-default btn-sm step-buttons" role="button" href="javascript:void()" onclick="loanExpress.stepAbn(this,false)">Next <i class="fa fa-chevron-right" aria-hidden="true"></i></a>
+                            <a class="btn btn-default btn-sm step-buttons" role="button" href="javascript:void()" onclick="loanExpress.stepAbn(this, false)">Next <i class="fa fa-chevron-right" aria-hidden="true"></i></a>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-        <div id="step11" class="step" data-valid="false" data-indicator="false">
+        <div id="step11" class="step" data-valid="false" data-indicator="false" style="z-index: 1000">
+            <h2 class="small-margin-top"><?php _e('Select up to 3 lenders and click "Proceed"') ?></h2>
+            <div class="loan-lenders">
+                <div class="lender-loader">
+                    <p><i class="glyphicon glyphicon-refresh abn-loader-processing"></i> <?php _e('Please wait...') ?></p>
+                </div>
+                <div class="lender-main"></div>
+                <div class="col-md-offset-4 col-md-4 process-btn" style="display: none">
+                    <a class="btn btn-default btn-sm step-buttons" role="button" href="javascript:void()" onclick="loanExpress.stepLenders(this)">Process <i class="fa fa-chevron-right" aria-hidden="true"></i></a>
+                </div>
+            </div>
+            <!-- Modal -->
+            <div class="modal fade" id="myModal" role="dialog" style="display: block">
+                <div class="modal-dialog">
+                    <!-- Modal content-->
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <button type="button" class="close" data-dismiss="modal">&times;</button>
+                            <h4 class="modal-title">Modal Header</h4>
+                        </div>
+                        <div class="modal-body">
+                            <p>Some text in the modal.</p>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                        </div>
+                    </div>
 
+                </div>
+            </div>
         </div>
         <div id="step12" class="step" data-valid="false" data-indicator="false">
 

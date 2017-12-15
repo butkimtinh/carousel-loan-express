@@ -21,8 +21,8 @@ class CarouselLoanExpress {
         add_action("wp_ajax_search_lender", array($this, 'search_lender'));
         add_action("wp_ajax_nopriv_search_lender", array($this, 'search_lender'));
 
-        add_action('wp_ajax_get_abn_info', array($this, 'get_abn_info'));    // If called from admin panel
-        add_action('wp_ajax_nopriv_get_abn_info', array($this, 'get_abn_info'));    // If called from front end
+        add_action('wp_ajax_get_abn_info', array($this, 'get_abn_info'));   
+        add_action('wp_ajax_nopriv_get_abn_info', array($this, 'get_abn_info'));    
     }
 
     public function init() {
@@ -30,6 +30,7 @@ class CarouselLoanExpress {
         wp_register_script('icheck', plugins_url('/assets/icheck-1.0.2/icheck.min.js', __FILE__), array('jquery'), '1.0.2');
         wp_register_script('jquery.validate', plugins_url('/assets/jquery-validation-1.17.0/dist/jquery.validate.min.js', __FILE__), array('jquery'), '1.17.0');
         wp_register_script('jquery-ui-js', plugins_url('/assets/js/jquery-ui.js', __FILE__), array('jquery'), '0.0.1');
+        wp_register_script('bootstrap.min-js', plugins_url('/assets/js/bootstrap.min.js', __FILE__), array('jquery'), '3.3.7');
         wp_register_script('cloanexpress-js', plugins_url('/assets/js/cloanexpress.js', __FILE__), array('jquery'), '0.0.1');
         wp_register_script('cloanexpress-custom', plugins_url('/assets/js/custom.js', __FILE__), array('jquery'), '0.0.1');
 
@@ -47,6 +48,7 @@ class CarouselLoanExpress {
         wp_enqueue_script('cloanexpress-js');
         wp_enqueue_script('cloanexpress-custom');
         wp_enqueue_script('jquery-ui-js');
+        wp_enqueue_script('bootstrap.min-js');
 
         wp_enqueue_style('noUiSlider');
         wp_enqueue_style('icheck-all');
@@ -212,6 +214,7 @@ class CarouselLoanExpress {
 
         $lender_amount = isset($_POST['lender_amount']) ? $_POST['lender_amount'] : false;
         if ($lender_amount) {
+            $lender_amount = intval($lender_amount);
             $args['meta_query']['lender_amount_clause'] = array(
                 array(
                     array(
@@ -259,17 +262,31 @@ class CarouselLoanExpress {
             while ($query->have_posts()) {
                 $query->the_post();
                 $featured_img_url = get_the_post_thumbnail_url(get_the_ID(), 'full');
+                $min_price = sprintf('$%s', number_format(get_post_meta($post->ID, 'lender_amount_min', true)));
+                $max_price = sprintf('$%s', number_format(get_post_meta($post->ID, 'lender_amount_max', true)));
+                $collection = array('Unsecured Business Loans', 'Invoice Finance', 'Line of Credit / Trade Finance', 'Equipment Finance', 'Vehicle Finance', 'Property Development Finance');
+                $products = get_post_meta($post->ID, 'lender_products', true);
+                $label = array();
+                foreach ($products as $k){
+                    $label[] = $collection[$k];
+                }
                 $lenders[] = array(
                     'ID' => $post->ID,
                     'title' => get_the_title(),
                     'email' => get_post_meta($post->ID, 'lender_email', true),
                     'phone' => get_post_meta($post->ID, 'lender_phone', true),
                     'term' => get_post_meta($post->ID, 'lender_term', true),
+                    'products' => join(',', $label),
                     'thumbnail' => $featured_img_url,
-                    'amount' => sprintf('%s - %s', get_post_meta($post->ID, 'lender_amount_min', true), get_post_meta($post->ID, 'lender_amount_max', true))
+                    'amount' => sprintf('%s - %s', $min_price, $max_price)
                 );
             }
             $data['lenders'] = $lenders;
+            ob_start();
+            include __DIR__ . DIRECTORY_SEPARATOR . 'view/search_lender.phtml';
+            $html = ob_get_contents();
+            ob_end_clean();
+            $data['html'] = $html;
         }
         echo json_encode($data);
         die;

@@ -45,6 +45,7 @@ function LoanExpress() {
     this.valid = false;
     this.loanSlider;
     this.data;
+    this.lenders = [];
     this.initialize = function(config) {
         this.loanSlider = new LoanExpresSlider({'max': 1000000000, 'min': 5000, 'step': 5000, 'start': 500000000});
         this.loanSlider.initialize();
@@ -170,6 +171,43 @@ function LoanExpress() {
             }
         }
         this.nextStep(e);
+        this.loadRelevantLender();
+    };
+    this.selectLender = function(e){
+        $(e).toggleClass('active');
+    };
+    this.stepLenders = function(e){
+        var active = $('.loan-lenders .active');
+        that = this;
+        if(active.length > 0){
+            var lenders = [];
+            active.each(function(index){
+                lenders.push($(this).data('id'));
+            });
+            this.data.append('loan_lenders', lenders);
+        }else{
+            alert('Please select the lenders below');
+        }
+    };
+    this.loadRelevantLender = function(){
+        $('.lender-loader').show();
+        var lender_amount = this.data.get('loan_amount');
+        var lender_term = this.data.get('loan_terms');
+        var lender_products = this.data.get('loan_products');
+        $.ajax({
+            type: 'POST',
+            url:ajaxurl,
+            data:{action:'search_lender',lender_amount:lender_amount, lender_term: lender_term, lender_products:lender_products },
+            success: function(resp) {
+                $('.lender-loader').hide();
+                if(!resp.errno && resp.count){
+                    $('.lender-main').html(resp.html);
+                    $('.loan-lenders .process-btn').show();
+                }else{
+                    
+                }
+            }
+        });
     };
     this.nextStep = function(e) {
         var currentStep = $(e).closest('.step');

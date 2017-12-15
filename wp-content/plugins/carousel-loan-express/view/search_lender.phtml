@@ -1,0 +1,48 @@
+<?php
+/**
+ * OnlineBiz Software Solution
+ * 
+ * @project lendclick.com.au
+ * @version 0.0.1
+ * @encoding UTF-8
+ * @author Joe Vu<joe@onlinebizsoft.com>
+ * @see http://onlinebizsoft.com
+ * @copyright (c) 2017 , OnlineBiz Software Solution
+ * 
+ * Create at: Dec 14, 2017 4:22:39 PM
+ */
+extract($data);
+?>
+<div class="row">
+    <?php foreach ($lenders as $lender): ?>
+        <div class="col-md-6 lender-box" onclick="loanExpress.selectLender(this)" data-id='<?php echo $lender['ID'] ?>'>
+            <div class="col-md-3">
+                <img src="<?php echo $lender['thumbnail'] ?>"/>
+            </div>
+            <div class="col-md-9">
+                <table class="lender-info">
+                    <tr>
+                        <td class="lender-label">Name</td>
+                        <td class="lender-value"><?php echo $lender['title'] ?></td>
+                    </tr>
+                    <tr>
+                        <td class="lender-label">Email address</td>
+                        <td class="lender-value"><?php echo $lender['email'] ?></td>
+                    </tr>
+                    <tr>
+                        <td class="lender-label">Loan Term</td>
+                        <td class="lender-value"><?php echo $lender['term'] ?> (months)</td>
+                    </tr>
+                    <tr>
+                        <td class="lender-label">Loan Products</td>
+                        <td class="lender-value"><?php echo $lender['products'] ?> </td>
+                    </tr>
+                    <tr>
+                        <td class="lender-label">Loan Amount(USD)</td>
+                        <td class="lender-value"><?php echo $lender['amount'] ?></td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    <?php endforeach; ?>
+</div>
