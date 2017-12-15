@@ -4,4 +4,7 @@ $(document).ready(function() {
         labelHover: false,
         cursor: true
     });
+    $('.close').click(function(){
+        $(this).closest('.modal').hide();
+    });
 });

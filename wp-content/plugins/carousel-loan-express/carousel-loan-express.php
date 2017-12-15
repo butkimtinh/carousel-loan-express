@@ -21,8 +21,11 @@ class CarouselLoanExpress {
         add_action("wp_ajax_search_lender", array($this, 'search_lender'));
         add_action("wp_ajax_nopriv_search_lender", array($this, 'search_lender'));
 
-        add_action('wp_ajax_get_abn_info', array($this, 'get_abn_info'));   
-        add_action('wp_ajax_nopriv_get_abn_info', array($this, 'get_abn_info'));    
+        add_action("wp_ajax_create_application", array($this, 'create_application'));
+        add_action("wp_ajax_nopriv_create_application", array($this, 'create_application'));
+
+        add_action('wp_ajax_get_abn_info', array($this, 'get_abn_info'));
+        add_action('wp_ajax_nopriv_get_abn_info', array($this, 'get_abn_info'));
     }
 
     public function init() {
@@ -139,7 +142,7 @@ class CarouselLoanExpress {
                         $bussinessData['stateName'] = $this->getStateName($bussinessData['stateCode']);
                         $bussinessData['postcode'] = $businessEntity->mainBusinessPhysicalAddress->postcode;
                     }
-                    if($businessEntity->entityStatus){
+                    if ($businessEntity->entityStatus) {
                         $bussinessData['effectiveFrom'] = $businessEntity->entityStatus->effectiveFrom;
                     }
                     $data['bussiness'] = $bussinessData;
@@ -189,11 +192,48 @@ class CarouselLoanExpress {
         }
         return $name;
     }
+
     public function get_abn_info() {
         $data = array();
         $q = isset($_POST['q']) ? trim($_POST['q']) : false;
         if ($q) {
             $data = $this->getAbnInfo($q);
+        }
+        header('Content-Type: application/json');
+        echo json_encode($data);
+        die;
+    }
+
+    public function create_application() {
+        header('Access-Control-Allow-Origin: *');
+        $data = array(
+            'errno' => 1,
+            'msg' => 'Sorry! 404 Not found'
+        );
+        extract($_POST);
+        
+        if ($loan_amount && $loan_terms && $loan_products && $loan_lenders && $loan_customer_email) {
+            ob_start();
+            include __DIR__ . DIRECTORY_SEPARATOR . '/view/content_application.phtml';
+            $html = ob_get_contents();
+            ob_end_clean();
+            $my_post = array(
+                'post_title' => sprintf('%s <%s>', $loan_customer_name, $loan_customer_email),
+                'post_content' => $html,
+                'post_status' => 'publish',
+                'post_type' => 'application',
+                'post_author' => 1,
+            );
+            // Insert the post into the database
+            $result = wp_insert_post($my_post);
+            if($result == 0 || $result instanceof WP_Error){
+                $data['msg'] = __('Sorry we cant create an application at the moment. Please try again later.');
+            }else{
+                $data['errno'] = 0;
+                $data['msg'] = __('Thank you, our lenders will contact you shortly');
+                update_post_meta($result, 'application_json', json_encode($_POST));
+                update_post_meta($result, 'application_email', $loan_customer_email);
+            }
         }
         header('Content-Type: application/json');
         echo json_encode($data);
@@ -267,7 +307,7 @@ class CarouselLoanExpress {
                 $collection = array('Unsecured Business Loans', 'Invoice Finance', 'Line of Credit / Trade Finance', 'Equipment Finance', 'Vehicle Finance', 'Property Development Finance');
                 $products = get_post_meta($post->ID, 'lender_products', true);
                 $label = array();
-                foreach ($products as $k){
+                foreach ($products as $k) {
                     $label[] = $collection[$k];
                 }
                 $lenders[] = array(
@@ -287,6 +327,8 @@ class CarouselLoanExpress {
             $html = ob_get_contents();
             ob_end_clean();
             $data['html'] = $html;
+        } else {
+            $data['msg'] = __('Sorry not found any lender');
         }
         echo json_encode($data);
         die;
@@ -299,7 +341,7 @@ class CarouselLoanExpress {
             'show_ui' => true,
             'capability_type' => 'post',
             'hierarchical' => false,
-            'rewrite' => array('slug' => 'guest-apply'),
+            'rewrite' => array('slug' => 'lender'),
             'query_var' => true,
             'menu_icon' => 'dashicons-groups',
             'menu_position' => 28,
@@ -308,7 +350,23 @@ class CarouselLoanExpress {
                 'thumbnail'
             )
         );
-        register_post_type('lender', $args);
+        register_post_type('application', $args);
+        $args = array(
+            'label' => 'Application',
+            'public' => false,
+            'show_ui' => true,
+            'capability_type' => 'post',
+            'hierarchical' => false,
+            'rewrite' => array('slug' => 'application'),
+            'query_var' => true,
+            'menu_icon' => 'dashicons-groups',
+            'menu_position' => 28,
+            'supports' => array(
+                'title',
+                'editor'
+            )
+        );
+        register_post_type('application', $args);
     }
 
     public function toHtml($attrs) {

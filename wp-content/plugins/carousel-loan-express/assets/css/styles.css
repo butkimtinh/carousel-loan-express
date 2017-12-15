@@ -292,7 +292,7 @@
     margin-bottom: 15px;
     margin-top: 5px;
 }
-.abn-loader, .lender-loader{
+.abn-loader, .lender-loader, .additional-loader{
     display: none;
     position: absolute;
     width: 100%;
@@ -330,8 +330,10 @@ table.lender-info td{
     color: #3c4d6b;
     font-weight: bold;
 }
-.loan-lenders .modal{
-    position: absolute;
-    top: 50px;
-    z-index: 1000;
+.loan-additional{
+    margin: 20px auto;
+    width: 320px;
+}
+#additional-fields-save{
+    border: none;
 }

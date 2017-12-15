@@ -2,10 +2,11 @@ $ = jQuery.noConflict();
 function LoanExpresSlider(config) {
     this.config = config;
     this.slided = false;
+    this.loanSlider;
     this.initialize = function() {
-        var loanSlider = document.getElementById('loan-slider');
+        this.loanSlider = document.getElementById('loan-slider');
         var that = this;
-        noUiSlider.create(loanSlider, {
+        noUiSlider.create(this.loanSlider, {
             start: that.config.start,
             step: that.config.step,
             connect: [true, false],
@@ -14,23 +15,30 @@ function LoanExpresSlider(config) {
                 'max': [that.config.max]
             }
         });
-        loanSlider.noUiSlider.on('slide', function() {
-            that.slided = true;
-            var val = loanSlider.noUiSlider.get();
-            $('#howmuch-num').text(that.formatCurrency(val));
+        this.loanSlider.noUiSlider.on('slide', function() {
+            that.updatePrice();
         });
-
-        $('.loan-indicators li').click(function() {
-            var stepId = $(this).data('target');
+        this.loanSlider.noUiSlider.on('set', function() {
+            that.updatePrice();
         });
+    };
+    this.updatePrice = function() {
+        this.slided = true;
+        var val = this.loanSlider.noUiSlider.get();
+        $('#howmuch-num').text(this.formatCurrency(val));
     };
     this.formatCurrency = function(amount, n, x) {
         var re = '\\d(?=(\\d{' + (x || 3) + '})+' + (n > 0 ? '\\.' : '$') + ')';
         return '$' + parseInt(amount).toFixed(Math.max(0, ~~n)).replace(new RegExp(re, 'g'), '$&,');
     };
-    this.val = function() {
-        var loanSlider = document.getElementById('loan-slider');
-        return loanSlider.noUiSlider.get();
+    this.val = function(num) {
+        if (!num) {
+            return this.loanSlider.noUiSlider.get();
+        } else {
+            this.loanSlider.noUiSlider.set(num);
+            return num;
+        }
+
     };
     this.isValid = function() {
         $('#select-amount-error').hide();
@@ -53,20 +61,21 @@ function LoanExpress() {
     };
     this.stepLoanSlider = function(e) {
         if (this.loanSlider.isValid()) {
-            this.data.append('loan_amount', this.loanSlider.val());
+            this.data.set('loan_amount', this.loanSlider.val());
             this.nextStep(e);
         }
     };
     this.stepTimeOfBusinessOperating = function(e) {
         $(e).closest('.step').find('.step-buttons').removeClass('active');
         $(e).addClass('active');
-        this.data.append('time_of_business_operating', $(e).data('val'));
+
+        this.data.set('time_of_business_operating', $(e).data('val'));
         this.nextStep(e);
     };
     this.stepLoanAverageRevenue = function(e) {
         $(e).closest('.step').find('.step-buttons').removeClass('active');
         $(e).addClass('active');
-        this.data.append('loan_average_revenue', $(e).data('val'));
+        this.data.set('loan_average_revenue', $(e).data('val'));
         this.nextStep(e);
     };
     this.stepLoanOffers = function(e) {
@@ -74,10 +83,10 @@ function LoanExpress() {
         var term_condition_ok = $('[name="term_condition"]').is(":checked");
         loanOffersFrm.validate();
         if (loanOffersFrm.valid() && term_condition_ok) {
-            this.data.append('loan_customer_name', $('input[name="name"]').val());
-            this.data.append('loan_customer_email', $('input[name="email"]').val());
-            this.data.append('loan_customer_phone', $('input[name="phone"]').val());
-            this.data.append('loan_customer_business', $('input[name="business"]').val());
+            this.data.set('loan_customer_name', $('input[name="name"]').val());
+            this.data.set('loan_customer_email', $('input[name="email"]').val());
+            this.data.set('loan_customer_phone', $('input[name="phone"]').val());
+            this.data.set('loan_customer_business', $('input[name="business"]').val());
             this.nextStep(e);
         }
     };
@@ -91,37 +100,37 @@ function LoanExpress() {
         });
         if (dobFrm.valid()) {
             $('#birth_date_error_text').hide();
-            var birth_day = $('input[name="birth_day"]').val();
-            var birth_month = $('input[name="birth_month"]').val();
-            var birth_year = $('input[name="birth_year"]').val();
-            this.data.append('loan_dob', birth_day + '/' + birth_month + '/' + birth_year);
+            var birth_day = $('[name="birth_day"]').val();
+            var birth_month = $('[name="birth_month"]').val();
+            var birth_year = $('[name="birth_year"]').val();
+            this.data.set('loan_dob', birth_day + '/' + birth_month + '/' + birth_year);
             this.nextStep(e);
         }
     };
-    this.selectProduct = function(e){
+    this.selectProduct = function(e) {
         $(e).toggleClass('active');
     };
-    this.stepLoanProducts = function(e){
+    this.stepLoanProducts = function(e) {
         var active = $('.loan-products .active');
         that = this;
-        if(active.length > 0){
+        if (active.length > 0) {
             var products = [];
-            active.each(function(index){
+            active.each(function(index) {
                 products.push($(this).data('val'));
             });
-            this.data.append('loan_products', products);
+            this.data.set('loan_products', products);
             this.nextStep(e);
-        }else{
+        } else {
             alert('Please select the product below');
         }
     };
-    this.stepLoanTerm = function(e){
+    this.stepLoanTerm = function(e) {
         $(e).closest('.step').find('.step-buttons').removeClass('active');
         $(e).addClass('active');
-        this.data.append('loan_terms', $(e).data('val'));
+        this.data.set('loan_terms', $(e).data('val'));
         this.nextStep(e);
     };
-    this.stepLoanIndustry = function(e){
+    this.stepLoanIndustry = function(e) {
         var industryFrm = $("#industry-frm");
         industryFrm.validate({
             messages: {},
@@ -130,81 +139,112 @@ function LoanExpress() {
             }
         });
         if (industryFrm.valid()) {
-            this.data.append('loan_industry', $('[name="industry_ID"]').val());
+            this.data.set('loan_industry', $('[name="industry_ID"]').val());
             this.nextStep(e);
         }
     };
-    this.stepLoanDrivingLicenseNumber = function(e){
-        this.data.append('loan_driving_license_number', $('[name="driver_license"]').val());
+    this.stepLoanDrivingLicenseNumber = function(e) {
+        this.data.set('loan_driving_license_number', $('[name="driver_license"]').val());
         this.nextStep(e);
     };
-    this.verifyAbn = function(e){
+    this.verifyAbn = function(e) {
         var q = $('[name="abn_num"]').val();
         $('.abn-loader').show();
-        if(q.length){
+        if (q.length) {
             $.ajax({
                 type: 'POST',
                 url: ajaxurl,
-                data:{action:'get_abn_info',q:q},
+                data: {action: 'get_abn_info', q: q},
                 success: function(resp) {
-                     $('.abn-loader').hide();
-                    if(!resp.errno){
+                    $('.abn-loader').hide();
+                    if (!resp.errno) {
                         $('.abn-search-link, #abn_num_error_text').hide();
                         $('.abn-legal-name').html(resp.bussiness.name);
                         $('.abn-reg-date').html(resp.bussiness.effectiveFrom);
-                        $('[name="abn_num"]').data('valid',true);
+                        $('[name="abn_num"]').data('valid', true);
                         $('.abn-info').show();
-                    }else{
+                    } else {
                         $('#abn_num_error_text, .abn-search-link').show();
                         $('.abn-info').hide();
-                        $('[name="abn_num"]').data('valid',false);
+                        $('[name="abn_num"]').data('valid', false);
                     }
                 }
             });
         }
     };
-    this.stepAbn = function(e, skip){
-        if(!skip){
+    this.stepAbn = function(e, skip) {
+        if (!skip) {
             var abn_num_valid = $('[name="abn_num"]').data('valid');
-            if(abn_num_valid){
-                this.data.append('loan_abn', $('[name="abn_num"]').val());
+            if (abn_num_valid) {
+                this.data.set('loan_abn', $('[name="abn_num"]').val());
             }
         }
         this.nextStep(e);
         this.loadRelevantLender();
     };
-    this.selectLender = function(e){
+    this.selectLender = function(e) {
         $(e).toggleClass('active');
     };
-    this.stepLenders = function(e){
+    this.stepLenders = function(e) {
         var active = $('.loan-lenders .active');
         that = this;
-        if(active.length > 0){
+        if (active.length > 0) {
             var lenders = [];
-            active.each(function(index){
+            active.each(function(index) {
                 lenders.push($(this).data('id'));
             });
-            this.data.append('loan_lenders', lenders);
-        }else{
+            $('.modal').show();
+            this.data.set('loan_lenders', lenders);
+        } else {
             alert('Please select the lenders below');
         }
     };
-    this.loadRelevantLender = function(){
+    this.loadRelevantLender = function() {
         $('.lender-loader').show();
         var lender_amount = this.data.get('loan_amount');
         var lender_term = this.data.get('loan_terms');
         var lender_products = this.data.get('loan_products');
         $.ajax({
             type: 'POST',
-            url:ajaxurl,
-            data:{action:'search_lender',lender_amount:lender_amount, lender_term: lender_term, lender_products:lender_products },
+            url: ajaxurl,
+            data: {action: 'search_lender', lender_amount: lender_amount, lender_term: lender_term, lender_products: lender_products},
             success: function(resp) {
                 $('.lender-loader').hide();
-                if(!resp.errno && resp.count){
+                if (!resp.errno && resp.count) {
                     $('.lender-main').html(resp.html);
                     $('.loan-lenders .process-btn').show();
+                    $('.loan-lenders .fail-btn').hide();
+                } else {
+                    $('.lender-main').html(resp.msg);
+                    $('.loan-lenders .fail-btn').show();
+                    $('.loan-lenders .process-btn').hide();
+                }
+            }
+        });
+    };
+    this.stepAgree = function(e){
+        var disclaimer_check_ok = $('[name="disclaimer-check"]').is(":checked");
+        if(disclaimer_check_ok){
+            $('.modal').hide();
+            this.nextStep(e);
+        }
+    };
+    this.stepFinish = function(e){
+        $('.additional-loader').show();
+        var that = this;
+        this.data.set('action','create_application');
+         $.ajax({
+            type: 'POST',
+            url: ajaxurl,
+            processData: false,
+            contentType: false,
+            data: this.data,
+            success: function(resp) {
+                $('.additional-loader').hide();
+                if(!resp.errno){
+                    that.nextStep(e);
                 }else{
-                    
+                    alert(resp.msg);
                 }
             }
         });
@@ -244,11 +284,14 @@ function LoanExpress() {
     this.step = function(e) {
         var li = $(e);
         var stepId = li.data('step');
-        var liCollection = $('.loan-indicators li');
-        if (liCollection.index(li) == 0) {
-            $('.loan-indicators').hide();
-        }
+        var stepTarget = $(stepId);
+        var indicator = stepTarget.data('indicator');
         $('.loan-indicators li').removeClass('active');
+        if (!indicator) {
+            $('.loan-indicators').hide();
+        } else {
+            $('.loan-indicators').show();
+        }
         $('.step').each(function() {
             var step = $(this);
             var valid = step.data('valid');
@@ -264,7 +307,10 @@ function LoanExpress() {
                 return false;
             } else {
                 if (valid == false) {
-                    $('.loan-indicators li[data-step="#' + step.attr('id') + '"]').addClass('active');
+                    if (indicator) {
+                        $('.loan-indicators li[data-step="#' + stepId + '"]').addClass('active');
+                    }
+
                     if (step.filter(":animated").length) {
                         step.stop();
                     }
