@@ -1,0 +1,125 @@
+<?php
+/**
+ * OnlineBiz Software Solution
+ * 
+ * @project lendclick.com.au
+ * @version 0.0.1
+ * @encoding UTF-8
+ * @author Joe Vu<joe@onlinebizsoft.com>
+ * @see http://onlinebizsoft.com
+ * @copyright (c) 2017 , OnlineBiz Software Solution
+ * 
+ * Create at: Dec 7, 2017 11:24:01 AM
+ */
+global $post;
+$app_info = get_post_meta($post->ID, 'app_info', true);
+if (is_array($app_info)) {
+    extract($app_info);
+}
+?>
+<style type="text/css">
+    #render_metabox_application{
+        width: 500px
+    }
+    #render_metabox_application td{
+        padding: 5px 0;
+    }
+    #render_metabox_application td .full-width{
+        width: 100%;
+    }
+</style>
+<table id="render_metabox_application"> 
+    <tr>
+        <td><?php _e('Full Name:') ?></td>
+        <td><input type="text" class="form-control full-width" id="loan_customer_name" name="app[loan_customer_name]" value="<?php echo isset($loan_customer_name) ? $loan_customer_name : '' ?>"/></td>
+    </tr>
+    <tr>
+        <td><?php _e('Birthday:') ?></td>
+        <td><input type="text" class="form-control full-width" id="loan_dob" name="app[loan_dob]" value="<?php echo isset($loan_dob) ? $loan_dob : '' ?>"/></td>
+    </tr>
+    <tr>
+        <td><?php _e('Email address:') ?></td>
+        <td><input type="email" class="form-control full-width" id="loan_customer_email" name="app[loan_customer_email]" value="<?php echo isset($loan_customer_email) ? $loan_customer_email : '' ?>"/></td>
+    </tr>
+    <tr>
+        <td><?php _e('Phone:') ?></td>
+        <td><input type="tel" class="form-control full-width" id="loan_customer_phone" name="app[loan_customer_phone]" value="<?php echo isset($loan_customer_phone) ? $loan_customer_phone : '' ?>"/></td>
+    </tr>
+    <tr>
+        <td><?php _e('ABN:') ?></td>
+        <td><input type="text" class="form-control full-width" id="loan_abn" name="app[loan_abn]" value="<?php echo isset($loan_abn) ? $loan_abn : '' ?>"/></td>
+    </tr>
+    <tr>
+        <td><?php _e('Business Name:') ?></td>
+        <td><input type="text" class="form-control full-width" id="loan_customer_business" name="app[loan_customer_business]" value="<?php echo isset($loan_customer_business) ? $loan_customer_business : '' ?>"/></td>
+    </tr>
+    <tr>
+        <td><?php _e('Industry') ?></td>
+        <td>
+            <?php 
+            echo $this->getIndustrySelect('loan_industry', 'app[loan_industry]',  isset($loan_industry) ? $loan_industry : '',array(
+                'class' => 'form-control full-width'
+            ));
+            ?>
+    </tr>
+    <tr>
+        <td><?php _e('Driving License Number') ?></td>
+        <td><input type="text" class="form-control full-width" id="loan_driving_license_number" name="app[loan_driving_license_number]" value="<?php echo isset($loan_driving_license_number) ? $loan_driving_license_number : '' ?>"/></td>
+    </tr>
+    <tr>
+        <td><?php _e('Loan Amount(USD)') ?></td>
+        <td><input type="text" class="form-control full-width" id="loan_amount" name="app[loan_amount]" value="<?php echo isset($loan_amount) ? (is_numeric($loan_amount)?sprintf('$%s', number_format($loan_amount)):$loan_amount) : '' ?>"/></td>
+    </tr>
+    <tr>
+        <td><?php _e('Loan Term (Months):') ?></td>
+        <?php
+        $loan_terms = isset($loan_terms) ? $loan_terms : '';
+        $termCollection = array('Any', '3-6', '6-12', '12-24', '24+');
+        ?>
+        <td><select name="app[loan_terms]">
+                <?php foreach ($termCollection as $termName): ?>
+                    <?php if ($termName == $loan_terms): ?>
+                        <option value="<?php echo $termName ?>" selected=""><?php echo $termName ?></option>
+                    <?php else: ?>
+                        <option value="<?php echo $termName ?>"><?php echo $termName ?></option>
+                    <?php endif ?>
+                <?php endforeach; ?>
+            </select></td>
+    </tr>
+    <tr>
+        <td><?php _e('Loan Products:') ?></td>
+        <?php
+        $selected = isset($loan_products) ? $loan_products : array();
+        $collection = array('Unsecured Business Loans', 'Invoice Finance', 'Line of Credit / Trade Finance', 'Equipment Finance', 'Vehicle Finance', 'Property Development Finance');
+        ?>
+        <td><select name="app[loan_products][]" multiple="" class="form-control full-width">
+                <?php
+                foreach ($collection as $k => $productName):
+                    ?>
+                    <?php if (in_array($k, $selected)): ?>
+                        <option value="<?php echo $k ?>" selected=""><?php echo $productName ?></option>
+                    <?php else: ?>
+                        <option value="<?php echo $k ?>"><?php echo $productName ?></option>
+                    <?php endif; ?>
+                    <?php
+                endforeach;
+                ?>
+            </select></td>
+    </tr>
+    <tr>
+        <td><?php _e('Time of business operating?') ?></td>
+        <td><input type="text" class="form-control full-width" id="time_of_business_operating" name="app[time_of_business_operating]" value="<?php echo isset($time_of_business_operating) ? $time_of_business_operating : '' ?>"/></td>
+    </tr>
+    <tr>
+        <td><?php _e('Monthly revenue? (average over past 6 months)') ?></td>
+        <td><input type="text" class="form-control full-width" id="loan_average_revenue" name="app[loan_average_revenue]" value="<?php echo isset($loan_average_revenue) ? $loan_average_revenue : '' ?>"/></td>
+    </tr>
+    <tr>
+        <td><?php _e('Additional contact number:') ?></td>
+        <td><input type="text" class="form-control full-width" id="business_phone_number" name="app[business_phone_number]" value="<?php echo isset($business_phone_number) ? $business_phone_number : '' ?>"/></td>
+    </tr>
+    <tr>
+        <td><?php _e('Best time to call:') ?></td>
+        <td><input type="text" class="form-control full-width" id="best_time_to_reach" name="app[best_time_to_reach]" value="<?php echo isset($best_time_to_reach) ? $best_time_to_reach : '' ?>"/></td>
+    </tr>
+</table>

@@ -114,11 +114,9 @@ function LoanExpress() {
         var active = $('.loan-products .active');
         that = this;
         if (active.length > 0) {
-            var products = [];
             active.each(function(index) {
-                products.push($(this).data('val'));
+                that.data.set('loan_products['+ index +']', $(this).data('val'));
             });
-            this.data.set('loan_products', products);
             this.nextStep(e);
         } else {
             alert('Please select the product below');
@@ -191,10 +189,9 @@ function LoanExpress() {
         if (active.length > 0) {
             var lenders = [];
             active.each(function(index) {
-                lenders.push($(this).data('id'));
+                that.data.set('loan_lenders['+index+']', $(this).data('id'));
             });
             $('.modal').show();
-            this.data.set('loan_lenders', lenders);
         } else {
             alert('Please select the lenders below');
         }
@@ -232,6 +229,8 @@ function LoanExpress() {
     this.stepFinish = function(e){
         $('.additional-loader').show();
         var that = this;
+        this.data.set('business_phone_number',$('[name="business_phone_number"]').val());
+        this.data.set('best_time_to_reach',$('[name="best_time_to_reach"]').val());
         this.data.set('action','create_application');
          $.ajax({
             type: 'POST',

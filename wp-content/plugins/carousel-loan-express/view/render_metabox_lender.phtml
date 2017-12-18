@@ -44,16 +44,16 @@ $lender_webhook = get_post_meta($post->ID, 'lender_webhook', true);
     <tr>
         <td><?php _e('Loan Term (Months):') ?></td>
         <?php
-        $termCollection = array('Any', '3-6','6-12','12-24','24+');
+        $termCollection = array('Any', '3-6', '6-12', '12-24', '24+');
         ?>
         <td><select name="lender_term">
-                <?php foreach ($termCollection as $termName):?>
-                    <?php if($termName == $lender_term):?>
+                <?php foreach ($termCollection as $termName): ?>
+                    <?php if ($termName == $lender_term): ?>
                         <option value="<?php echo $termName ?>" selected=""><?php echo $termName ?></option>
-                    <?php else:?>
+                    <?php else: ?>
                         <option value="<?php echo $termName ?>"><?php echo $termName ?></option>
-                    <?php endif?>
-                <?php endforeach;?>
+                    <?php endif ?>
+                <?php endforeach; ?>
             </select></td>
     </tr>
     <tr>
@@ -66,10 +66,10 @@ $lender_webhook = get_post_meta($post->ID, 'lender_webhook', true);
                 <?php
                 foreach ($collection as $k => $productName):
                     ?>
-                    <?php if(in_array($k, $selected)): ?>
-                    <option value="<?php echo $k ?>" selected=""><?php echo $productName ?></option>
+                    <?php if (in_array($k, $selected)): ?>
+                        <option value="<?php echo $k ?>" selected=""><?php echo $productName ?></option>
                     <?php else: ?>
-                    <option value="<?php echo $k ?>"><?php echo $productName ?></option>
+                        <option value="<?php echo $k ?>"><?php echo $productName ?></option>
                     <?php endif; ?>
                     <?php
                 endforeach;
@@ -80,10 +80,10 @@ $lender_webhook = get_post_meta($post->ID, 'lender_webhook', true);
         <td><?php _e('Loan Amount (USD):') ?></td>
         <td>
             Min:
-            <input type="text" size="5" name="lender_amount_min" value="<?php echo $lender_amount_min ? $lender_amount_min: '0' ?>"/>
+            <input type="text" size="5" name="lender_amount_min" value="<?php echo $lender_amount_min ? $lender_amount_min : '0' ?>"/>
             &nbsp;&nbsp;&nbsp;
             Max:
-            <input type="text" size="5" name="lender_amount_max" value="<?php echo $lender_amount_max ? $lender_amount_max: '1000000000' ?>"/>
+            <input type="text" size="5" name="lender_amount_max" value="<?php echo $lender_amount_max ? $lender_amount_max : '1000000000' ?>"/>
         </td>
     </tr>
     <tr>

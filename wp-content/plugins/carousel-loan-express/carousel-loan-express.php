@@ -42,6 +42,7 @@ class CarouselLoanExpress {
         wp_register_style('cloanexpress-styles', plugins_url('/assets/css/styles.css', __FILE__), false, '0.0.1', 'all');
         add_shortcode('cloanexpress', array($this, 'toHtml'));
         $this->register_post_type();
+        //$this->register_taxonomy();
     }
 
     public function enqueue_style() {
@@ -60,22 +61,41 @@ class CarouselLoanExpress {
 
     public function init_metabox() {
         add_action('add_meta_boxes', array($this, 'add_metabox'));
-        add_action('save_post', array($this, 'save_metabox'), 10, 2);
+        add_action('save_post', array($this, 'save_metabox_lender'), 10, 2);
+        add_action('save_post', array($this, 'save_metabox_application'), 10, 2);
     }
 
     public function add_metabox() {
-        add_meta_box('lender_id', __('Lender Info'), array($this, 'render_metabox'), 'lender', 'normal', 'high');
+        add_meta_box('lender_id', __('Lender Info'), array($this, 'render_metabox_lender'), 'lender', 'normal', 'high');
+        add_meta_box('application_id', __('Application Info'), array($this, 'render_metabox_application'), 'application', 'normal', 'high');
+        add_meta_box('application_lender_id', __('Lenders'), array($this, 'render_metabox_application_lenders'), 'application', 'side', 'high');
     }
 
-    public function render_metabox() {
+    public function render_metabox_lender() {
         ob_start();
-        include __DIR__ . DIRECTORY_SEPARATOR . 'view/render_metabox_lender.phtml';
+        include __DIR__ . DIRECTORY_SEPARATOR . 'view' . DIRECTORY_SEPARATOR . __FUNCTION__ . '.phtml';
         $html = ob_get_contents();
         ob_end_clean();
         echo $html;
     }
 
-    public function save_metabox($post_id, $post) {
+    public function render_metabox_application() {
+        ob_start();
+        include __DIR__ . DIRECTORY_SEPARATOR . 'view' . DIRECTORY_SEPARATOR . __FUNCTION__ . '.phtml';
+        $html = ob_get_contents();
+        ob_end_clean();
+        echo $html;
+    }
+
+    public function render_metabox_application_lenders() {
+        ob_start();
+        include __DIR__ . DIRECTORY_SEPARATOR . 'view' . DIRECTORY_SEPARATOR . __FUNCTION__ . '.phtml';
+        $html = ob_get_contents();
+        ob_end_clean();
+        echo $html;
+    }
+
+    public function save_metabox_lender($post_id, $post) {
         if ($post->post_type != 'lender') {
             return;
         }
@@ -103,6 +123,172 @@ class CarouselLoanExpress {
 
         $lender_webhook = isset($_POST['lender_webhook']) ? $_POST['lender_webhook'] : '';
         update_post_meta($post_id, 'lender_webhook', $lender_webhook);
+    }
+
+    public function save_metabox_application($post_id, $post) {
+        if ($post->post_type != 'application') {
+            return;
+        }
+        $app_info = isset($_POST['app']) ? $_POST['app'] : array();
+        update_post_meta($post_id, 'app_info', $app_info);
+        $app_lenders = isset($_POST['app_lenders']) ? $_POST['app_lenders'] : array();
+        ;
+        update_post_meta($post_id, 'app_lenders', $app_lenders);
+        $this->requestLenders($app_lenders, $app_info);
+    }
+
+    public function getLoanProductsCollection() {
+        return array('Unsecured Business Loans', 'Invoice Finance', 'Line of Credit / Trade Finance', 'Equipment Finance', 'Vehicle Finance', 'Property Development Finance');
+    }
+
+    public function getLoanTermsCollection() {
+        return array('Any', '3-6', '6-12', '12-24', '24+');
+    }
+
+    public function getLoanIndustryById($id) {
+        $collection = $this->getLoanIndustryCollection();
+        foreach ($collection as $item) {
+            foreach ($item as $k => $v) {
+                if ($k == $id) {
+                    return $v;
+                }
+            }
+        }
+        return false;
+    }
+
+    public function getLoanIndustryCollection() {
+        return array(
+            'Automotive' => array(
+                24 => 'Car Washes',
+                25 => 'Dealership',
+                26 => 'Parts and Accessories',
+                27 => 'Repair and Maintenance'
+            ),
+            'Construction' => array(
+                30 => 'Commercial',
+                28 => 'New Construction',
+                29 => 'Renovation &amp; Remodeling',
+                31 => 'Residential',
+            ),
+            'Entertainment and Recreation' => array(
+                1 => 'Adult Entertainment',
+                70 => 'Arts',
+                9 => 'Gambling',
+                74 => 'Nightclubs',
+                69 => 'Sports Club',
+            ),
+            'Health Services' => array(
+                33 => 'Dentists',
+                34 => 'Doctors Offices',
+                37 => 'Optometrists',
+                38 => 'Other Health Services',
+                35 => 'Personal Care Services',
+                36 => 'Pharmacies and Drug Stores'
+            ),
+            'Hospitality' => array(
+                73 => 'Bed and Breakfasts',
+                72 => 'Hotels &amp; Inns',
+            ),
+            'Other' => array(
+                2 => 'Agriculture, Forestry, Fishing and Hunting',
+                32 => 'Convenience Stores',
+                8 => 'Firearm Sales',
+                77 => 'Gas stations',
+                13 => 'Manufacturing',
+                14 => 'Mining (except Oil and Gas)',
+                15 => 'Oil and Gas Extraction',
+                16 => 'Other',
+                17 => 'Real Estate',
+                23 => 'Wholesale Trade'
+            ),
+            'Professional Services' => array(
+                7 => 'Finance and Insurance',
+                11 => 'IT, Media, or Publishing',
+                12 => 'Legal Services',
+            ),
+            'Restaurants and Food Services' => array(
+                40 => 'Catering',
+                41 => 'Other Food Services',
+                39 => 'Restaurants and Bars',
+            ),
+            'Retail Facilities' => array(
+                49 => 'Beauty Salon &amp; Barbers',
+                50 => 'Dry Cleaning &amp; Laundry',
+                51 => 'Gym &amp; Fitness Center',
+                52 => 'Nails Salon'
+            ),
+            'Retail Stores' => array(
+                42 => 'Building Materials',
+                43 => 'Electronics',
+                44 => 'Fashion, Clothing, Sports Goods',
+                46 => 'Garden &amp; Florists',
+                45 => 'Grocery, Supermarkets and Bakeries',
+                47 => 'Liquor Store',
+                48 => 'Other Retail Store',
+            ),
+            'Transportation, Taxis and Trucking' => array(
+                63 => 'Freight Trucking',
+                64 => 'Limousine',
+                67 => 'Other Transportaion &amp; Travel',
+                65 => 'Taxis',
+                66 => 'Travel Agencies'
+            ),
+            'Utilities and Home Services' => array(
+                6 => 'Cleaning',
+                60 => 'Landscaping Services',
+                61 => 'Other home services',
+                58 => 'Plumbing, Electricians &amp; HVAC'
+            )
+        );
+    }
+
+    public function requestLenders($lenders, $data = array()) {
+        if(isset($data['loan_products'])){
+            $loan_products = array();
+            $collectionProducts = $this->getLoanProductsCollection();
+            foreach ($collectionProducts as $k => $v) {
+                if (in_array($k, $data['loan_products'])) {
+                    $loan_products[] = $v;
+                }
+            }
+            $data['loan_products'] = $loan_products;
+        }
+        $data['loan_amount'] = isset($data['loan_amount'])? is_numeric($data['loan_amount']) ? sprintf('$%s', number_format($loan_amount)) : $data['loan_amount']:'';
+        $data['loan_industry'] = $this->getLoanIndustryById($data['loan_industry']);
+        $data['loan_terms'] = sprintf('%s months', $loan_terms);
+
+        $query = new WP_Query(array(
+            'post_type' => 'lender',
+            'post_status' => 'publish',
+            'post__in' => $lenders
+        ));
+        if ($query->have_posts()) {
+            $posts = $query->get_posts();
+            foreach ($posts as $post) {
+                $hook = get_post_meta($post->ID, 'lender_webhook', true);
+                if (filter_var($hook, FILTER_VALIDATE_URL) !== false) {
+                    $this->requestZapier($hook, $data);
+                }
+            }
+        }
+    }
+
+    public function requestZapier($url, $data = array()) {
+        $jsonEncodedData = json_encode($data);
+        $opts = array(
+            CURLOPT_URL => $url,
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_CUSTOMREQUEST => 'POST',
+            CURLOPT_POST => 1,
+            CURLOPT_POSTFIELDS => $jsonEncodedData,
+            CURLOPT_HTTPHEADER => array('Content-Type: application/json', 'Content-Length: ' . strlen($jsonEncodedData))
+        );
+        $curl = curl_init();
+        curl_setopt_array($curl, $opts);
+        $result = curl_exec($curl);
+        curl_close($curl);
+        return $result;
     }
 
     public function getAbnInfo($abn) {
@@ -211,28 +397,26 @@ class CarouselLoanExpress {
             'msg' => 'Sorry! 404 Not found'
         );
         extract($_POST);
-        
+
         if ($loan_amount && $loan_terms && $loan_products && $loan_lenders && $loan_customer_email) {
-            ob_start();
-            include __DIR__ . DIRECTORY_SEPARATOR . '/view/content_application.phtml';
-            $html = ob_get_contents();
-            ob_end_clean();
             $my_post = array(
                 'post_title' => sprintf('%s <%s>', $loan_customer_name, $loan_customer_email),
-                'post_content' => $html,
+                'post_content' => '',
                 'post_status' => 'publish',
                 'post_type' => 'application',
                 'post_author' => 1,
             );
             // Insert the post into the database
             $result = wp_insert_post($my_post);
-            if($result == 0 || $result instanceof WP_Error){
+            if ($result == 0 || $result instanceof WP_Error) {
                 $data['msg'] = __('Sorry we cant create an application at the moment. Please try again later.');
-            }else{
+            } else {
                 $data['errno'] = 0;
                 $data['msg'] = __('Thank you, our lenders will contact you shortly');
-                update_post_meta($result, 'application_json', json_encode($_POST));
-                update_post_meta($result, 'application_email', $loan_customer_email);
+                update_post_meta($result, 'app_info', $_POST);
+                update_post_meta($result, 'app_email', $loan_customer_email);
+                update_post_meta($result, 'app_lenders', $loan_lenders);
+                $this->requestLenders($loan_lenders, $_POST);
             }
         }
         header('Content-Type: application/json');
@@ -251,6 +435,8 @@ class CarouselLoanExpress {
 
         $args = array();
         $args['post_type'] = 'lender';
+        $args['post_status'] = 'publish';
+
 
         $lender_amount = isset($_POST['lender_amount']) ? $_POST['lender_amount'] : false;
         if ($lender_amount) {
@@ -281,7 +467,6 @@ class CarouselLoanExpress {
             );
         }
         $lender_products = isset($_POST['lender_products']) ? $_POST['lender_products'] : false;
-        ;
         if ($lender_products) {
             $itmes = explode(',', $lender_products);
             foreach ($itmes as $k) {
@@ -341,7 +526,7 @@ class CarouselLoanExpress {
             'show_ui' => true,
             'capability_type' => 'post',
             'hierarchical' => false,
-            'rewrite' => array('slug' => 'lender'),
+            'rewrite' => array('slug' => 'lender', 'with_front' => false),
             'query_var' => true,
             'menu_icon' => 'dashicons-groups',
             'menu_position' => 28,
@@ -350,7 +535,7 @@ class CarouselLoanExpress {
                 'thumbnail'
             )
         );
-        register_post_type('application', $args);
+        register_post_type('lender', $args);
         $args = array(
             'label' => 'Application',
             'public' => false,
@@ -362,11 +547,61 @@ class CarouselLoanExpress {
             'menu_icon' => 'dashicons-groups',
             'menu_position' => 28,
             'supports' => array(
-                'title',
-                'editor'
+                'title'
             )
         );
         register_post_type('application', $args);
+    }
+
+    public function register_taxonomy() {
+        $labels = array(
+            'name' => __('Lenders'),
+            'singular_name' => __('Lender'),
+            'search_items' => __('Search Lenders'),
+            'popular_items' => __('Popular Lenders'),
+            'all_items' => __('All Lenders'),
+            'parent_item' => null,
+            'parent_item_colon' => null,
+            'edit_item' => __('Edit Lender'),
+            'update_item' => __('Update Lender'),
+            'add_new_item' => __('Add New Lender'),
+            'new_item_name' => __('New Lender Name'),
+            'separate_items_with_commas' => __('Separate lenders with commas'),
+            'add_or_remove_items' => __('Add or remove lenders'),
+            'choose_from_most_used' => __('Choose from the most used lenders'),
+            'not_found' => __('No lenders found.'),
+            'menu_name' => __('Lenders'),
+        );
+
+        $args = array(
+            'hierarchical' => false,
+            'labels' => $labels,
+            'show_ui' => true,
+            'show_admin_column' => true,
+            'update_count_callback' => '_update_post_term_count',
+            'query_var' => true,
+            'rewrite' => array('slug' => 'lender', 'with_front' => false),
+        );
+        register_taxonomy('lender', 'application', $args);
+    }
+
+    public function lender_add_form_fields() {
+        include __DIR__ . DIRECTORY_SEPARATOR . 'view' . DIRECTORY_SEPARATOR . __FUNCTION__ . '.phtml';
+    }
+
+    public function save_taxonomy_lender_meta($term_id) {
+        if (isset($_POST['lender_meta'])) {
+            $t_id = $term_id;
+            $term_meta = get_option("taxonomy_$t_id");
+            $cat_keys = array_keys($_POST['lender_meta']);
+            foreach ($cat_keys as $key) {
+                if (isset($_POST['lender_meta'][$key])) {
+                    $term_meta[$key] = $_POST['lender_meta'][$key];
+                }
+            }
+            // Save the option array.
+            update_option("taxonomy_$t_id", $term_meta);
+        }
     }
 
     public function toHtml($attrs) {
@@ -374,6 +609,23 @@ class CarouselLoanExpress {
         include __DIR__ . DIRECTORY_SEPARATOR . 'view.phtml';
         $html = ob_get_contents();
         ob_end_clean();
+        return $html;
+    }
+
+    public function getIndustrySelect($id, $name, $selected = '', $options = array()) {
+        extract($options);
+        $industry = $this->getLoanIndustryCollection();
+        $html = sprintf('<select id="%s" name="%s" class="%s" required="">', $id, $name, $class);
+        $html .= '<option value="">Select Industry</option>';
+        foreach ($industry as $grpname => $grpitem) {
+            $html .= sprintf('<optgroup label="%s">', $grpname);
+            foreach ($grpitem as $k => $v) {
+                $attr = $k == $selected ? 'selected="selected"' : '';
+                $html .= sprintf('<option value="%s" %s >%s</option>', $k, $attr, $v);
+            }
+            $html .= '</optgroup>';
+        }
+        $html .= '</select>';
         return $html;
     }
 

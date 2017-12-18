@@ -362,99 +362,11 @@
                     <div class="row">
                         <div class="col-md-8 col-md-offset-2">
                             <div class="form-group input">
-                                <select id="industry_ID" name="industry_ID" class="form-control step-select" required="">
-                                    <option value="">Select Industry</option>					
-                                    <optgroup label="Automotive">
-                                        <option value="24">Car Washes</option>
-                                        <option value="25">Dealership</option>
-                                        <option value="26">Parts and Accessories</option>
-                                        <option value="27">Repair and Maintenance</option>
-                                    </optgroup>
-                                    <optgroup label="Construction">
-                                        <option value="30">Commercial</option>
-                                        <option value="28">New Construction</option>
-                                        <option value="29">Renovation &amp; Remodeling</option>
-                                        <option value="31">Residential</option>
-                                    </optgroup>
-                                    <optgroup label="Entertainment and Recreation">
-
-                                        <option value="1">Adult Entertainment</option>
-                                        <option value="70">Arts</option>
-                                        <option value="9">Gambling</option>
-                                        <option value="74">Nightclubs</option>
-                                        <option value="69">Sports Club</option>
-                                    </optgroup>
-                                    <optgroup label="Health Services">
-
-                                        <option value="33">Dentists</option>
-                                        <option value="34">Doctors Offices</option>
-                                        <option value="37">Optometrists</option>
-                                        <option value="38">Other Health Services</option>
-                                        <option value="35">Personal Care Services</option>
-                                        <option value="36">Pharmacies and Drug Stores</option>
-                                    </optgroup>
-                                    <optgroup label="Hospitality">
-
-                                        <option value="73">Bed and Breakfasts</option>
-                                        <option value="72">Hotels &amp; Inns</option>
-                                    </optgroup>
-                                    <optgroup label="Other">
-
-                                        <option value="2">Agriculture, Forestry, Fishing and Hunting</option>
-                                        <option value="32">Convenience Stores</option>
-                                        <option value="8">Firearm Sales</option>
-                                        <option value="77">Gas stations</option>
-                                        <option value="13">Manufacturing</option>
-                                        <option value="14">Mining (except Oil and Gas)</option>
-                                        <option value="15">Oil and Gas Extraction</option>
-                                        <option value="16">Other</option>
-                                        <option value="17">Real Estate</option>
-                                        <option value="23">Wholesale Trade</option>
-                                    </optgroup>
-                                    <optgroup label="Professional Services">
-
-                                        <option value="7">Finance and Insurance</option>
-                                        <option value="11">IT, Media, or Publishing</option>
-                                        <option value="12">Legal Services</option>
-                                    </optgroup>
-                                    <optgroup label="Restaurants and Food Services">
-
-                                        <option value="40">Catering</option>
-                                        <option value="41">Other Food Services</option>
-                                        <option value="39">Restaurants and Bars</option>
-                                    </optgroup>
-                                    <optgroup label="Retail Facilities">
-
-                                        <option value="49">Beauty Salon &amp; Barbers</option>
-                                        <option value="50">Dry Cleaning &amp; Laundry</option>
-                                        <option value="51">Gym &amp; Fitness Center</option>
-                                        <option value="52">Nails Salon</option>
-                                    </optgroup>
-                                    <optgroup label="Retail Stores">
-
-                                        <option value="42">Building Materials</option>
-                                        <option value="43">Electronics</option>
-                                        <option value="44">Fashion, Clothing, Sports Goods</option>
-                                        <option value="46">Garden &amp; Florists</option>
-                                        <option value="45">Grocery, Supermarkets and Bakeries</option>
-                                        <option value="47">Liquor Store</option>
-                                        <option value="48">Other Retail Store</option>
-                                    </optgroup>
-                                    <optgroup label="Transportation, Taxis and Trucking">
-
-                                        <option value="63">Freight Trucking</option>
-                                        <option value="64">Limousine</option>
-                                        <option value="67">Other Transportaion &amp; Travel</option>
-                                        <option value="65">Taxis</option>
-                                        <option value="66">Travel Agencies</option>
-                                    </optgroup>
-                                    <optgroup label="Utilities and Home Services">
-                                        <option value="6">Cleaning</option>
-                                        <option value="60">Landscaping Services</option>
-                                        <option value="61">Other home services</option>
-                                        <option value="58">Plumbing, Electricians &amp; HVAC</option>
-                                    </optgroup>
-                                </select>
+                                <?php 
+                                echo $this->getIndustrySelect('industry_ID', 'industry_ID','', array(
+                                    'class' => 'form-control step-select'
+                                ));
+                                ?>
                                 <div>
                                     <span id="industry_name_error_text" class="error_input_text"><?php _e('Please select an industry') ?></span>
                                 </div>

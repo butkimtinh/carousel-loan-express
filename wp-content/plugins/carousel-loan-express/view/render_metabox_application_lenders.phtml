@@ -1,0 +1,42 @@
+<?php
+/**
+ * OnlineBiz Software Solution
+ * 
+ * @project lendclick.com.au
+ * @version 0.0.1
+ * @encoding UTF-8
+ * @author Joe Vu<joe@onlinebizsoft.com>
+ * @see http://onlinebizsoft.com
+ * @copyright (c) 2017 , OnlineBiz Software Solution
+ * 
+ * Create at: Dec 18, 2017 11:19:47 AM
+ */
+global $post;
+$app_lenders = get_post_meta($post->ID, 'app_lenders', true);
+$query = new WP_Query(array(
+    'post_type' => 'lender',
+    'post_status' => 'publish',
+        ));
+if ($query->have_posts()):
+    ?>
+<style type="text/css">
+    .app-lenders{
+        max-height: 200px;
+        overflow-y: auto;
+    }
+</style>
+    <ul class="app-lenders">
+        <?php
+            foreach ($query->get_posts() as $p):
+            $checked = $app_lenders && in_array($p->ID, $app_lenders) ? 'checked="checked"' : '';
+            ?> 
+            <li>
+                <input type="checkbox" name="app_lenders[]"  value="<?php echo $p->ID ?>" <?php echo $checked ?>/> <?php echo $p->post_title ?>
+            </li>
+            <?php
+            endforeach;
+        ?></ul>
+    <?php
+endif;
+wp_reset_query();
+?>
