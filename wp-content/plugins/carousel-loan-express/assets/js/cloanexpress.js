@@ -55,7 +55,7 @@ function LoanExpress() {
     this.data;
     this.lenders = [];
     this.initialize = function(config) {
-        this.loanSlider = new LoanExpresSlider({'max': 1000000000, 'min': 5000, 'step': 5000, 'start': 500000000});
+        this.loanSlider = new LoanExpresSlider({'max': 1000000, 'min': 5000, 'step': 5000, 'start': 500000});
         this.loanSlider.initialize();
         this.data = new FormData();
     };
@@ -187,7 +187,6 @@ function LoanExpress() {
         var active = $('.loan-lenders .active');
         that = this;
         if (active.length > 0) {
-            var lenders = [];
             active.each(function(index) {
                 that.data.set('loan_lenders['+index+']', $(this).data('id'));
             });

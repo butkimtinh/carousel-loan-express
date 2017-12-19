@@ -12,28 +12,6 @@
  * Create at: Nov 30, 2017 11:24:47 AM
  */
 ?>
-<script type="text/javascript">
-    var loanConfig = '';
-
-    jQuery(document).ready(function() {
-        jQuery('#search-lender-btn').click(function() {
-            var data = new FormData();
-            data.append('action', 'search_lender');
-            data.append('lender_amount', 3000);
-            data.append('lender_term', '6-12')
-            data.append('lender_products', '1');
-            jQuery.ajax({
-                type: 'POST',
-                url: ajaxurl,
-                processData: false,
-                contentType: false,
-                data: data,
-                success: function(resp) {
-                }
-            });
-        });
-    });
-</script>
 <div class="cloanexpress">
     <div class="loan-main">
         <ol class="loan-indicators">
@@ -45,11 +23,11 @@
         <div id="step1" class="step" data-valid="false" data-indicator="false">
             <div class="slider-wapper">
                 <h3><?php _e('Choose Loan Amount') ?></h3>
-                <div id="howmuch-num">$5,000-$500,000,000</div>
+                <div id="howmuch-num">$5,000-$1,000,000</div>
                 <div class="loan-slider-wapper">
                     <div id="loan-slider"></div>
                     <span class="loan-min limit">$5,000</span>
-                    <span class="loan-max limit">$1,000,000,000</span>
+                    <span class="loan-max limit">$1,000,000</span>
                     <span id="select-amount-error" style="display: none"><?php _e('Please Choose Loan Amount') ?></span>
                 </div>
                 <a class="btn btn-success btn-lg start-steps" id="main-button" href="javascript:void()" onclick="loanExpress.stepLoanSlider(this)"  role="button" style="box-shadow: rgba(0, 0, 0, 0.46) 0px 4px 8px;">Check Eligibility</a>
@@ -151,7 +129,7 @@
             <div class="loan-dob">
                 <form id="dob-frm" onsubmit="return false;">
                     <div class="row">
-                        <div class="col-md-4">
+                        <div class="col-md-4 col-sm-4 col-xs-4">
                             <div class="form-group input">
                                 <select required="" class="form-control step-select" id="birth_day" name="birth_day">
                                     <option value="">Day</option>
@@ -189,7 +167,7 @@
                                 </select>
                             </div>
                         </div>
-                        <div class="col-md-4">
+                        <div class="col-md-4 col-sm-4 col-xs-4">
                             <div class="form-group input">
                                 <select class="form-control step-select" id="birth_month" name="birth_month" required="">
                                     <option value="">Month</option>
@@ -208,7 +186,7 @@
                                 </select>
                             </div>
                         </div>
-                        <div class="col-md-4">
+                        <div class="col-md-4 col-sm-4 col-xs-4">
                             <div class="form-group input">
                                 <select class="form-control step-select" id="birth_year" name="birth_year" required="">
                                     <option value="">Year</option>
@@ -362,8 +340,8 @@
                     <div class="row">
                         <div class="col-md-8 col-md-offset-2">
                             <div class="form-group input">
-                                <?php 
-                                echo $this->getIndustrySelect('industry_ID', 'industry_ID','', array(
+                                <?php
+                                echo $this->getIndustrySelect('industry_ID', 'industry_ID', '', array(
                                     'class' => 'form-control step-select'
                                 ));
                                 ?>
@@ -442,7 +420,7 @@
                 </div>
                 <div class="lender-main"></div>
                 <div class="col-md-offset-4 col-md-4 process-btn" style="display: none">
-                    <a class="btn btn-default btn-sm step-buttons" role="button" href="javascript:void()" onclick="loanExpress.stepLenders(this)">Process <i class="fa fa-chevron-right" aria-hidden="true"></i></a>
+                    <a class="btn btn-default btn-sm step-buttons" role="button" href="javascript:void()" onclick="loanExpress.stepLenders(this)">Proceed <i class="fa fa-chevron-right" aria-hidden="true"></i></a>
                 </div>
                 <div class="col-md-offset-4 col-md-4 fail-btn" style="display: none">
                     <a class="btn btn-default btn-sm step-buttons" role="button" href="javascript:void()" data-step="#step1" onclick="loanExpress.step(this)"><i class="fa fa-chevron-left" aria-hidden="true"></i> Back</a>
@@ -469,7 +447,7 @@
                 </div>
             </div>
         </div>
-        <div id="step12" class="step" data-valid="false" data-indicator="false">
+        <div id="step12" class="step" data-valid="false" data-indicator="false" style="z-index: 1000">
             <h2 class="modal-title"><?php _e('Wait, one last thing before your chosen lenders call you!') ?></h2>
             <div class="loan-additional">
                 <div class="additional-loader">

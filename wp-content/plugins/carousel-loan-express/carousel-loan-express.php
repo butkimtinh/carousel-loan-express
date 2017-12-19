@@ -254,10 +254,13 @@ class CarouselLoanExpress {
             }
             $data['loan_products'] = $loan_products;
         }
-        $data['loan_amount'] = isset($data['loan_amount'])? is_numeric($data['loan_amount']) ? sprintf('$%s', number_format($loan_amount)) : $data['loan_amount']:'';
+        $data['loan_amount'] = isset($data['loan_amount'])? (is_numeric($data['loan_amount']) ? sprintf('$%s', number_format($data['loan_amount'])) : $data['loan_amount']):'';
         $data['loan_industry'] = $this->getLoanIndustryById($data['loan_industry']);
-        $data['loan_terms'] = sprintf('%s months', $loan_terms);
+        $data['loan_terms'] = sprintf('%s months', $data['loan_terms']);
 
+        if(isset($data['action'])){
+            unset($data['action']);
+        }
         $query = new WP_Query(array(
             'post_type' => 'lender',
             'post_status' => 'publish',

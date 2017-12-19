@@ -13,13 +13,13 @@
  */
 extract($data);
 ?>
-<div class="row">
-    <?php foreach ($lenders as $lender): ?>
-        <div class="col-md-6 lender-box" onclick="loanExpress.selectLender(this)" data-id='<?php echo $lender['ID'] ?>'>
-            <div class="col-md-3">
+<?php foreach ($lenders as $lender): ?>
+    <div class="col-md-6 lender-box">
+        <div class="row" onclick="loanExpress.selectLender(this)" data-id='<?php echo $lender['ID'] ?>'>
+            <div class="col-md-3 col-xs-3 col-sm-3">
                 <img src="<?php echo $lender['thumbnail'] ?>"/>
             </div>
-            <div class="col-md-9">
+            <div class="col-md-9 col-xs-9 col-sm-9">
                 <table class="lender-info">
                     <tr>
                         <td class="lender-label">Name</td>
@@ -44,5 +44,5 @@ extract($data);
                 </table>
             </div>
         </div>
-    <?php endforeach; ?>
-</div>
+    </div>
+<?php endforeach; ?>
