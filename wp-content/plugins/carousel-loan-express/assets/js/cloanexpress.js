@@ -89,7 +89,7 @@ function LoanExpress() {
             this.container.data('loan_customer_business', $('input[name="business"]').val());
             this.nextStep(e);
         }
-        if(!term_condition_ok){
+        if (loanOffersFrm.valid() && !term_condition_ok) {
             alert('Please tick the checkbox below to go to next step');
         }
     };
@@ -118,7 +118,7 @@ function LoanExpress() {
         that = this;
         if (active.length > 0) {
             active.each(function(index) {
-                that.container.data('loan_products['+ index +']', $(this).data('val'));
+                that.container.data('loan_products[' + index + ']', $(this).data('val'));
             });
             this.nextStep(e);
         } else {
@@ -191,7 +191,7 @@ function LoanExpress() {
         that = this;
         if (active.length > 0) {
             active.each(function(index) {
-                that.container.data('loan_lenders['+index+']', $(this).data('id'));
+                that.container.data('loan_lenders[' + index + ']', $(this).data('id'));
             });
             $('.modal').show();
         } else {
@@ -221,30 +221,30 @@ function LoanExpress() {
             }
         });
     };
-    this.stepAgree = function(e){
+    this.stepAgree = function(e) {
         var disclaimer_check_ok = $('[name="disclaimer-check"]').is(":checked");
-        if(disclaimer_check_ok){
+        if (disclaimer_check_ok) {
             $('.modal').hide();
             this.nextStep(e);
-        }else{
+        } else {
             alert('Please tick the checkbox below to go to next step');
         }
     };
-    this.stepFinish = function(e){
+    this.stepFinish = function(e) {
         $('.additional-loader').show();
         var that = this;
-        this.container.data('business_phone_number',$('[name="business_phone_number"]').val());
-        this.container.data('best_time_to_reach',$('[name="best_time_to_reach"]').val());
-        this.container.data('action','create_application');
-         $.ajax({
+        this.container.data('business_phone_number', $('[name="business_phone_number"]').val());
+        this.container.data('best_time_to_reach', $('[name="best_time_to_reach"]').val());
+        this.container.data('action', 'create_application');
+        $.ajax({
             type: 'POST',
             url: ajaxurl,
             data: this.container.data(),
             success: function(resp) {
                 $('.additional-loader').hide();
-                if(!resp.errno){
+                if (!resp.errno) {
                     that.nextStep(e);
-                }else{
+                } else {
                     alert(resp.msg);
                 }
             }
