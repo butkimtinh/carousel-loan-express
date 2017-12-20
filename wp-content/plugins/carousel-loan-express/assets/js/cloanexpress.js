@@ -52,16 +52,16 @@ function LoanExpresSlider(config) {
 function LoanExpress() {
     this.valid = false;
     this.loanSlider;
-    this.data;
+    this.container;
     this.lenders = [];
     this.initialize = function(config) {
         this.loanSlider = new LoanExpresSlider({'max': 1000000, 'min': 5000, 'step': 5000, 'start': 500000});
         this.loanSlider.initialize();
-        this.data = new FormData();
+        this.container = $('.cloanexpress');
     };
     this.stepLoanSlider = function(e) {
         if (this.loanSlider.isValid()) {
-            this.data.set('loan_amount', this.loanSlider.val());
+            this.container.data('loan_amount', this.loanSlider.val());
             this.nextStep(e);
         }
     };
@@ -69,13 +69,13 @@ function LoanExpress() {
         $(e).closest('.step').find('.step-buttons').removeClass('active');
         $(e).addClass('active');
 
-        this.data.set('time_of_business_operating', $(e).data('val'));
+        this.container.data('time_of_business_operating', $(e).data('val'));
         this.nextStep(e);
     };
     this.stepLoanAverageRevenue = function(e) {
         $(e).closest('.step').find('.step-buttons').removeClass('active');
         $(e).addClass('active');
-        this.data.set('loan_average_revenue', $(e).data('val'));
+        this.container.data('loan_average_revenue', $(e).data('val'));
         this.nextStep(e);
     };
     this.stepLoanOffers = function(e) {
@@ -83,11 +83,14 @@ function LoanExpress() {
         var term_condition_ok = $('[name="term_condition"]').is(":checked");
         loanOffersFrm.validate();
         if (loanOffersFrm.valid() && term_condition_ok) {
-            this.data.set('loan_customer_name', $('input[name="name"]').val());
-            this.data.set('loan_customer_email', $('input[name="email"]').val());
-            this.data.set('loan_customer_phone', $('input[name="phone"]').val());
-            this.data.set('loan_customer_business', $('input[name="business"]').val());
+            this.container.data('loan_customer_name', $('input[name="name"]').val());
+            this.container.data('loan_customer_email', $('input[name="email"]').val());
+            this.container.data('loan_customer_phone', $('input[name="phone"]').val());
+            this.container.data('loan_customer_business', $('input[name="business"]').val());
             this.nextStep(e);
+        }
+        if(!term_condition_ok){
+            alert('Please tick the checkbox below to go to next step');
         }
     };
     this.stepDob = function(e) {
@@ -103,7 +106,7 @@ function LoanExpress() {
             var birth_day = $('[name="birth_day"]').val();
             var birth_month = $('[name="birth_month"]').val();
             var birth_year = $('[name="birth_year"]').val();
-            this.data.set('loan_dob', birth_day + '/' + birth_month + '/' + birth_year);
+            this.container.data('loan_dob', birth_day + '/' + birth_month + '/' + birth_year);
             this.nextStep(e);
         }
     };
@@ -115,7 +118,7 @@ function LoanExpress() {
         that = this;
         if (active.length > 0) {
             active.each(function(index) {
-                that.data.set('loan_products['+ index +']', $(this).data('val'));
+                that.container.data('loan_products['+ index +']', $(this).data('val'));
             });
             this.nextStep(e);
         } else {
@@ -125,7 +128,7 @@ function LoanExpress() {
     this.stepLoanTerm = function(e) {
         $(e).closest('.step').find('.step-buttons').removeClass('active');
         $(e).addClass('active');
-        this.data.set('loan_terms', $(e).data('val'));
+        this.container.data('loan_terms', $(e).data('val'));
         this.nextStep(e);
     };
     this.stepLoanIndustry = function(e) {
@@ -137,12 +140,12 @@ function LoanExpress() {
             }
         });
         if (industryFrm.valid()) {
-            this.data.set('loan_industry', $('[name="industry_ID"]').val());
+            this.container.data('loan_industry', $('[name="industry_ID"]').val());
             this.nextStep(e);
         }
     };
     this.stepLoanDrivingLicenseNumber = function(e) {
-        this.data.set('loan_driving_license_number', $('[name="driver_license"]').val());
+        this.container.data('loan_driving_license_number', $('[name="driver_license"]').val());
         this.nextStep(e);
     };
     this.verifyAbn = function(e) {
@@ -174,7 +177,7 @@ function LoanExpress() {
         if (!skip) {
             var abn_num_valid = $('[name="abn_num"]').data('valid');
             if (abn_num_valid) {
-                this.data.set('loan_abn', $('[name="abn_num"]').val());
+                this.container.data('loan_abn', $('[name="abn_num"]').val());
             }
         }
         this.nextStep(e);
@@ -188,7 +191,7 @@ function LoanExpress() {
         that = this;
         if (active.length > 0) {
             active.each(function(index) {
-                that.data.set('loan_lenders['+index+']', $(this).data('id'));
+                that.container.data('loan_lenders['+index+']', $(this).data('id'));
             });
             $('.modal').show();
         } else {
@@ -197,9 +200,9 @@ function LoanExpress() {
     };
     this.loadRelevantLender = function() {
         $('.lender-loader').show();
-        var lender_amount = this.data.get('loan_amount');
-        var lender_term = this.data.get('loan_terms');
-        var lender_products = this.data.get('loan_products');
+        var lender_amount = this.container.data('loan_amount');
+        var lender_term = this.container.data('loan_terms');
+        var lender_products = this.container.data('loan_products');
         $.ajax({
             type: 'POST',
             url: ajaxurl,
@@ -223,20 +226,20 @@ function LoanExpress() {
         if(disclaimer_check_ok){
             $('.modal').hide();
             this.nextStep(e);
+        }else{
+            alert('Please tick the checkbox below to go to next step');
         }
     };
     this.stepFinish = function(e){
         $('.additional-loader').show();
         var that = this;
-        this.data.set('business_phone_number',$('[name="business_phone_number"]').val());
-        this.data.set('best_time_to_reach',$('[name="best_time_to_reach"]').val());
-        this.data.set('action','create_application');
+        this.container.data('business_phone_number',$('[name="business_phone_number"]').val());
+        this.container.data('best_time_to_reach',$('[name="best_time_to_reach"]').val());
+        this.container.data('action','create_application');
          $.ajax({
             type: 'POST',
             url: ajaxurl,
-            processData: false,
-            contentType: false,
-            data: this.data,
+            data: this.container.data(),
             success: function(resp) {
                 $('.additional-loader').hide();
                 if(!resp.errno){

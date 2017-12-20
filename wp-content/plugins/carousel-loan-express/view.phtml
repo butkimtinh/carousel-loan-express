@@ -306,6 +306,10 @@
                     <a class="btn btn-default btn-sm step-buttons" role="button" href="javascript:void()" onclick="loanExpress.stepLoanProducts(this)"  data-slide="next">Next <i class="fa fa-chevron-right" aria-hidden="true"></i></a>
                 </div>
             </div>
+            <div class="col-lg-12">
+                <a class="back-arrow" href="javascript:void()" data-step="#step5" onclick="loanExpress.step(this)">
+                    <i class="fa fa-chevron-left" aria-hidden="true"></i> Back</a>
+            </div>
         </div>
         <div id="step7" class="step" data-valid="false" data-indicator="false">
             <h2><?php _e('Select Term (Month)') ?></h2>
@@ -329,6 +333,10 @@
                         </div>
                     </div>
                 </div>
+            </div>
+            <div class="col-lg-12">
+                <a class="back-arrow" href="javascript:void()" data-step="#step6" onclick="loanExpress.step(this)">
+                    <i class="fa fa-chevron-left" aria-hidden="true"></i> Back</a>
             </div>
         </div>
         <div id="step8" class="step" data-valid="false" data-indicator="false">
@@ -356,6 +364,10 @@
                     </div>
                 </form>
             </div>
+            <div class="col-lg-12">
+                <a class="back-arrow" href="javascript:void()" data-step="#step7" onclick="loanExpress.step(this)">
+                    <i class="fa fa-chevron-left" aria-hidden="true"></i> Back</a>
+            </div>
         </div>
         <div id="step9" class="step" data-valid="false" data-indicator="false">
             <h2><?php _e('Driving license number') ?></h2>
@@ -375,7 +387,11 @@
                         <a class="btn btn-default btn-sm step-buttons" onclick="loanExpress.stepLoanDrivingLicenseNumber(this)" href="javascript:void()">Next <i class="fa fa-chevron-right" aria-hidden="true"></i></a>
                     </div>
                 </div>
-            </div> 
+            </div>
+            <div class="col-lg-12">
+                <a class="back-arrow" href="javascript:void()" data-step="#step8" onclick="loanExpress.step(this)">
+                    <i class="fa fa-chevron-left" aria-hidden="true"></i> Back</a>
+            </div>
         </div>
         <div id="step10" class="step" data-valid="false" data-indicator="false">
             <h2 class="small-margin-top">What is your<br><b>ABN</b></h2>
@@ -410,6 +426,10 @@
                         </div>
                     </div>
                 </div>
+            </div>
+            <div class="col-lg-12">
+                <a class="back-arrow" href="javascript:void()" data-step="#step9" onclick="loanExpress.step(this)">
+                    <i class="fa fa-chevron-left" aria-hidden="true"></i> Back</a>
             </div>
         </div>
         <div id="step11" class="step" data-valid="false" data-indicator="false">
@@ -447,7 +467,7 @@
                 </div>
             </div>
         </div>
-        <div id="step12" class="step" data-valid="false" data-indicator="false" style="z-index: 1000">
+        <div id="step12" class="step" data-valid="false" data-indicator="false">
             <h2 class="modal-title"><?php _e('Wait, one last thing before your chosen lenders call you!') ?></h2>
             <div class="loan-additional">
                 <div class="additional-loader">
@@ -467,7 +487,7 @@
 
         </div>
         <div id="step13" class="step" data-valid="false" data-indicator="false">
-            <h2 class="thank-you">Thank you, our lenders will contact you shortly</h2>
+            <h2 class="thank-you"><?php _e('Thank you, our lenders will contact you shortly')?></h2>
         </div>
     </div>
 </div>

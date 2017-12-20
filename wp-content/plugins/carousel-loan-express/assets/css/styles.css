@@ -180,7 +180,7 @@
 }
 .step h2 {
     text-align: center;
-    font-size: 2.5em;
+    font-size: 30px;
     border-top: 1px solid #fff;
     border-bottom: 1px solid #fff;
     padding: 20px 43px;
@@ -205,6 +205,18 @@
     background-color: #fff;
     text-transform: none;
     font-weight: normal;
+}
+.back-arrow {
+    margin-top: 13px;
+    display: block;
+    color: #ffffff91;
+    text-align: center;
+    font-size: 21px;
+    margin-top: 20px;
+}
+.back-arrow:hover, .back-arrow:focus {
+    text-decoration: none !important;
+    color: #ffffff91;
 }
 
 .step .step-buttons.active, .step .step-buttons:active, .step .step-buttons:focus, .step .step-buttons:active:hover{
