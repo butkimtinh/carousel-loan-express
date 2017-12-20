@@ -17,6 +17,8 @@ class CarouselLoanExpress {
         if (is_admin()) {
             add_action('load-post.php', array($this, 'init_metabox'));
             add_action('load-post-new.php', array($this, 'init_metabox'));
+            add_action('admin_init', array($this, 'add_role_caps'), 999);
+            add_filter('pre_get_posts', array($this, 'applications_for_current_author'));
         }
         add_action("wp_ajax_search_lender", array($this, 'search_lender'));
         add_action("wp_ajax_nopriv_search_lender", array($this, 'search_lender'));
@@ -26,6 +28,22 @@ class CarouselLoanExpress {
 
         add_action('wp_ajax_get_abn_info', array($this, 'get_abn_info'));
         add_action('wp_ajax_nopriv_get_abn_info', array($this, 'get_abn_info'));
+    }
+
+    public function applications_for_current_author($query) {
+        global $pagenow;
+        if ('edit.php' != $pagenow || !$query->is_admin)
+            return $query;
+        if (!current_user_can('edit_others_posts')) {
+            global $user_ID;
+            $query->set('author', $user_ID);
+        }
+        if (!current_user_can('edit_users') ){
+            global $user_ID;
+            $query->set('author', $user_ID);
+        }
+        
+        return $query;
     }
 
     public function init() {
@@ -246,7 +264,7 @@ class CarouselLoanExpress {
     }
 
     public function requestLenders($lenders, $data = array()) {
-        if(isset($data['loan_products'])){
+        if (isset($data['loan_products'])) {
             $loan_products = array();
             $collectionProducts = $this->getLoanProductsCollection();
             foreach ($collectionProducts as $k => $v) {
@@ -256,11 +274,15 @@ class CarouselLoanExpress {
             }
             $data['loan_products'] = $loan_products;
         }
-        $data['loan_amount'] = isset($data['loan_amount'])? (is_numeric($data['loan_amount']) ? sprintf('$%s', number_format($data['loan_amount'])) : $data['loan_amount']):'';
-        $data['loan_industry'] = $this->getLoanIndustryById($data['loan_industry']);
-        $data['loan_terms'] = sprintf('%s months', $data['loan_terms']);
-
-        if(isset($data['action'])){
+        $data['loan_amount'] = isset($data['loan_amount']) ? (is_numeric($data['loan_amount']) ? sprintf('$%s', number_format($data['loan_amount'])) : $data['loan_amount']) : '';
+        if(isset($data['loan_industry'])){
+            $data['loan_industry'] = $this->getLoanIndustryById($data['loan_industry']);
+        }
+        if(isset($data['loan_terms'])){
+            $data['loan_terms'] = sprintf('%s months', $data['loan_terms']);
+        }
+        
+        if (isset($data['action'])) {
             unset($data['action']);
         }
         $query = new WP_Query(array(
@@ -548,6 +570,8 @@ class CarouselLoanExpress {
             'capability_type' => 'post',
             'hierarchical' => false,
             'rewrite' => array('slug' => 'application'),
+            'capability_type' => 'application',
+            'map_meta_cap' => true,
             'query_var' => true,
             'menu_icon' => 'dashicons-groups',
             'menu_position' => 28,
@@ -634,6 +658,35 @@ class CarouselLoanExpress {
         return $html;
     }
 
+    public function add_role_caps() {
+        $roles = array('manage_application', 'administrator');
+        foreach ($roles as $the_role) {
+            $role = get_role($the_role);
+            if ($role) {
+                $role->add_cap('read_application');
+                $role->add_cap('read_private_applications');
+                $role->add_cap('edit_application');
+                $role->add_cap('edit_applications');
+                $role->add_cap('edit_others_applications');
+                $role->add_cap('delete_others_applications');
+                $role->add_cap('delete_private_applications');
+            }
+        }
+    }
+
+    public function add_roles_on_plugin_activation() {
+        remove_role('manage_application');
+        add_role('manage_application', 'Manage Application', array(
+            'read' => true,
+            'edit_posts' => false,
+            'delete_posts' => false,
+            'publish_posts' => false,
+            'upload_files' => false,
+            'edit_users' => false,
+        ));
+    }
+
 }
 
 $joebiz = new CarouselLoanExpress();
+register_activation_hook(__FILE__, array($joebiz, 'add_roles_on_plugin_activation'));
