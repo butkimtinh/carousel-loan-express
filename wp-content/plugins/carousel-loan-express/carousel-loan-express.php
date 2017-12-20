@@ -33,6 +33,7 @@ class CarouselLoanExpress {
         wp_register_script('icheck', plugins_url('/assets/icheck-1.0.2/icheck.min.js', __FILE__), array('jquery'), '1.0.2');
         wp_register_script('jquery.validate', plugins_url('/assets/jquery-validation-1.17.0/dist/jquery.validate.min.js', __FILE__), array('jquery'), '1.17.0');
         wp_register_script('jquery-ui-js', plugins_url('/assets/js/jquery-ui.js', __FILE__), array('jquery'), '0.0.1');
+        wp_register_script('jquery.mask', plugins_url('/assets/jQuery-Mask-Plugin-1.14.13/dist/jquery.mask.min.js', __FILE__), array('jquery'), '1.14.13');
         wp_register_script('bootstrap.min-js', plugins_url('/assets/js/bootstrap.min.js', __FILE__), array('jquery'), '3.3.7');
         wp_register_script('cloanexpress-js', plugins_url('/assets/js/cloanexpress.js', __FILE__), array('jquery'), '0.0.1');
         wp_register_script('cloanexpress-custom', plugins_url('/assets/js/custom.js', __FILE__), array('jquery'), '0.0.1');
@@ -52,6 +53,7 @@ class CarouselLoanExpress {
         wp_enqueue_script('cloanexpress-js');
         wp_enqueue_script('cloanexpress-custom');
         wp_enqueue_script('jquery-ui-js');
+        wp_enqueue_script('jquery.mask');
         wp_enqueue_script('bootstrap.min-js');
 
         wp_enqueue_style('noUiSlider');

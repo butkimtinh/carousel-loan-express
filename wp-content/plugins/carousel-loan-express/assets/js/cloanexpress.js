@@ -81,11 +81,13 @@ function LoanExpress() {
     this.stepLoanOffers = function(e) {
         var loanOffersFrm = $("#loan-offers-frm");
         var term_condition_ok = $('[name="term_condition"]').is(":checked");
-        loanOffersFrm.validate();
         if (loanOffersFrm.valid() && term_condition_ok) {
+            var phone = $('input[name="phone"]').val();
+            phone = phone.replace(/\D/g,'');
+            
             this.container.data('loan_customer_name', $('input[name="name"]').val());
             this.container.data('loan_customer_email', $('input[name="email"]').val());
-            this.container.data('loan_customer_phone', $('input[name="phone"]').val());
+            this.container.data('loan_customer_phone', phone);
             this.container.data('loan_customer_business', $('input[name="business"]').val());
             this.nextStep(e);
         }
