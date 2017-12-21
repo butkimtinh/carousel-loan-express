@@ -49,15 +49,17 @@ function LoanExpresSlider(config) {
     }
 }
 
-function LoanExpress() {
+function LoanExpress(config) {
     this.valid = false;
+    this.config = config;
     this.loanSlider;
     this.container;
     this.lenders = [];
-    this.initialize = function(config) {
+    this.initialize = function() {
         this.loanSlider = new LoanExpresSlider({'max': 1000000, 'min': 5000, 'step': 5000, 'start': 500000});
         this.loanSlider.initialize();
         this.container = $('.cloanexpress');
+        $.cookie('_cletoken', cletoken);
     };
     this.stepLoanSlider = function(e) {
         if (this.loanSlider.isValid()) {
@@ -88,22 +90,22 @@ function LoanExpress() {
             $.ajax({
                 type: 'POST',
                 url: ajaxurl,
-                data: {action: 'create_user', user_name:name, user_email:email},
+                data: {action: 'create_user', user_name: name, user_email: email},
                 success: function(resp) {
                     $('.offers-loader').hide();
-                    if(!resp.errno){
+                    if (!resp.errno) {
                         that.container.data('loan_author_id', resp.author_id);
                         that.container.data('loan_customer_name', name);
                         that.container.data('loan_customer_email', email);
                         that.container.data('loan_customer_phone', $('input[name="phone"]').val());
                         that.container.data('loan_customer_business', $('input[name="business"]').val());
                         that.nextStep(e);
-                    }else{
+                    } else {
                         alert('Sorry we cant process your data.');
                     }
                 }
             });
-            
+
         }
         if (loanOffersFrm.valid() && !term_condition_ok) {
             alert('Please tick the checkbox below to go to next step');
@@ -269,6 +271,7 @@ function LoanExpress() {
     this.nextStep = function(e) {
         var currentStep = $(e).closest('.step');
         var nextStep = currentStep.next('.step');
+        var that = this;
         if (nextStep.length) {
             var width = currentStep.outerWidth(true);
             var stepId = '#' + nextStep.attr('id');
@@ -282,14 +285,36 @@ function LoanExpress() {
                     } else {
                         $('.loan-indicators').css({display: 'none'});
                     }
-
+                    that.saveStep(stepId);
                 }
             });
+            $.cookie('current_step', stepId);
             if (indicator) {
                 $('.loan-indicators li').removeClass('active');
                 $('.loan-indicators li[data-step="' + stepId + '"]').addClass('active');
             }
         }
+    };
+    this.saveStep = function(stepId) {
+        var cledata = JSON.stringify({
+            step: stepId,
+            data: this.container.data()
+        });
+        var data = {
+            action: 'save_step',
+            cletoken: cletoken,
+            cledata: cledata
+        };
+        $.ajax({
+            type: 'POST',
+            url: ajaxurl,
+            data: data,
+            success: function(resp) {
+                if (!resp.errno) {
+                    $.cookie(cletoken, cledata);
+                }
+            }
+        });
     };
     this.prevStep = function(e) {
         var currentStep = $(e).closest('.step');
@@ -348,12 +373,3 @@ function LoanExpress() {
         });
     };
 }
-
-var loanExpress;
-$(document).ready(function() {
-    if ($('.cloanexpress').length > 0) {
-        loanExpress = new LoanExpress();
-        loanExpress.initialize();
-    }
-});
-

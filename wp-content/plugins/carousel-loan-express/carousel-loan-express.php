@@ -1,5 +1,4 @@
 <?php
-
 /*
   Plugin Name: Carousel Loan Express
   Plugin URI: http://www.onlinebizsoft.com/
@@ -29,8 +28,63 @@ class CarouselLoanExpress {
         add_action("wp_ajax_create_application", array($this, 'create_application'));
         add_action("wp_ajax_nopriv_create_application", array($this, 'create_application'));
 
+        add_action("wp_ajax_save_step", array($this, 'save_step'));
+        add_action("wp_ajax_nopriv_save_step", array($this, 'save_step'));
+
         add_action('wp_ajax_get_abn_info', array($this, 'get_abn_info'));
         add_action('wp_ajax_nopriv_get_abn_info', array($this, 'get_abn_info'));
+
+        add_action('wp_head', array($this, 'cloanexpress_js'));
+
+        register_activation_hook(__FILE__, array($this, 'onActivation'));
+        register_deactivation_hook(__FILE__, array($this, 'onDeactivation'));
+        register_uninstall_hook(__FILE__, array(__CLASS__, 'onUninstall'));
+    }
+
+    public function cloanexpress_js() {
+        ?>
+        <script type="text/javascript">
+            var cleconfig = $.parseJSON('<?php echo $this->getCleConfigJson() ?>');
+            var cletoken = '<?php echo $this->getCleToken() ?>';
+            var loanExpress;
+            $(document).ready(function() {
+                if ($('.cloanexpress').length > 0) {
+                    loanExpress = new LoanExpress(cleconfig);
+                    loanExpress.initialize();
+                }
+            });
+        </script>
+        <?php
+    }
+
+    public function register_session() {
+        if (!session_id()) {
+            session_start();
+        }
+    }
+
+    public function getCleConfigJson() {
+        $_cletoken = $this->getCleToken();
+        $result = $this->getCleConfig($_cletoken);
+        if ($result) {
+            return json_decode($result->data);
+        } elseif (isset($_COOKIE[$_cletoken])) {
+            return $_COOKIE[$_cletoken];
+        } else {
+            return json_encode(array());
+        }
+    }
+
+    public function getCleToken() {
+        if (isset($_GET['_cletoken'])) {
+            $_cltoken = $_GET['_cletoken'];
+        } elseif (isset($_COOKIE['_cletoken'])) {
+            $_cltoken = $_COOKIE['_cletoken'];
+        } else {
+            $_cltoken = md5($_SERVER['REMOTE_ADDR'] . time());
+        }
+        $_SESSION['_cletoken'] = $_cltoken;
+        return $_cltoken;
     }
 
     public function applications_for_current_author($query) {
@@ -54,6 +108,7 @@ class CarouselLoanExpress {
         wp_register_script('icheck', plugins_url('/assets/icheck-1.0.2/icheck.min.js', __FILE__), array('jquery'), '1.0.2');
         wp_register_script('jquery.validate', plugins_url('/assets/jquery-validation-1.17.0/dist/jquery.validate.min.js', __FILE__), array('jquery'), '1.17.0');
         wp_register_script('jquery-ui-js', plugins_url('/assets/js/jquery-ui.js', __FILE__), array('jquery'), '0.0.1');
+        wp_register_script('jquery.cookie', plugins_url('/assets/js/jquery.cookie.js', __FILE__), array('jquery'), '1.4.1');
         wp_register_script('jquery.mask', plugins_url('/assets/jQuery-Mask-Plugin-1.14.13/dist/jquery.mask.min.js', __FILE__), array('jquery'), '1.14.13');
         wp_register_script('bootstrap.min-js', plugins_url('/assets/js/bootstrap.min.js', __FILE__), array('jquery'), '3.3.7');
         wp_register_script('cloanexpress-js', plugins_url('/assets/js/cloanexpress.js', __FILE__), array('jquery'), '0.0.1');
@@ -64,6 +119,7 @@ class CarouselLoanExpress {
         wp_register_style('cloanexpress-styles', plugins_url('/assets/css/styles.css', __FILE__), false, '0.0.1', 'all');
         add_shortcode('cloanexpress', array($this, 'toHtml'));
         $this->register_post_type();
+        $this->register_session();
         //$this->register_taxonomy();
     }
 
@@ -74,6 +130,7 @@ class CarouselLoanExpress {
         wp_enqueue_script('cloanexpress-js');
         wp_enqueue_script('cloanexpress-custom');
         wp_enqueue_script('jquery-ui-js');
+        wp_enqueue_script('jquery.cookie');
         wp_enqueue_script('jquery.mask');
         wp_enqueue_script('bootstrap.min-js');
 
@@ -504,6 +561,21 @@ EOD;
         die;
     }
 
+    public function save_step() {
+        header('Access-Control-Allow-Origin: *');
+        header('Content-Type: application/json');
+        $data = array(
+            'errno' => 1,
+            'msg' => 'Sorry! 404 Not found'
+        );
+        if (isset($_POST['cletoken']) && $_SESSION['_cletoken'] == $_POST['cletoken'] && isset($_POST['cledata']) && $this->saveCleConfig($_POST['cletoken'], $_POST['cledata'])) {
+            $data['errno'] = 0;
+            $data['msg'] = 'Success';
+        }
+        echo json_encode($data);
+        die;
+    }
+
     public function search_lender() {
         global $post;
         header('Access-Control-Allow-Origin: *');
@@ -746,28 +818,84 @@ EOD;
             'delete_applications',
             'delete_private_applications',
             'delete_published_applications',
-            'edit_applications'
+                //'edit_applications'
         );
         foreach ($roles as $the_role) {
             $role = get_role($the_role);
             if ($role) {
-                foreach ($caps as $cap){
+                foreach ($caps as $cap) {
                     $role->add_cap($cap);
                 }
             }
         }
     }
 
-    public function add_roles_on_plugin_activation() {
-        remove_role('manage_application');
+    public function onActivation() {
+        global $wpdb;
         add_role('manage_application', 'Manage Application', array(
             'upload_files' => false,
             'edit_users' => false,
             'level_0' => true,
         ));
+        $table_name = $wpdb->prefix . "clepxress";
+        $charset_collate = $wpdb->get_charset_collate();
+        $sql = "CREATE TABLE $table_name (
+		`id` int(11) NOT NULL AUTO_INCREMENT,
+                `token` varchar(32) NOT NULL,
+                `data` text NOT NULL,
+                `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                `expired_at` datetime NOT NULL,
+		PRIMARY KEY (`id`),
+                KEY `token` (`token`)
+	) $charset_collate;";
+        require_once( ABSPATH . 'wp-admin/includes/upgrade.php' );
+        dbDelta($sql);
+    }
+
+    public function onDeactivation() {
+        self::destroy();
+    }
+
+    public static function onUninstall() {
+        self::destroy();
+    }
+
+    public static function destroy() {
+        global $wpdb;
+        remove_role('manage_application');
+        $table_name = $wpdb->prefix . "clepxress";
+        $wpdb->query("DROP TABLE IF EXISTS $table_name");
+    }
+
+    public function saveCleConfig($token, $data) {
+        global $wpdb;
+        $table_name = $wpdb->prefix . "clepxress";
+        $token = esc_sql($token);
+        $data = json_encode($data);
+        $current_time = time();
+        $created_at = date('Y-m-d H:i:s', $current_time);
+        $expired_at = date('Y-m-d H:i:s', $current_time + 7 * 24 * 60 * 60);
+        if ($this->hasCleToken($token)) {
+            $r = $wpdb->update($table_name, array('data' => $data, 'created_at' => $created_at, 'expired_at' => $expired_at), array('token' => $token));
+        } else {
+            $r = $wpdb->insert($table_name, array('token' => $token, 'data' => $data, 'created_at' => $created_at, 'expired_at' => $expired_at));
+        }
+        return $r;
+    }
+
+    public function hasCleToken($token) {
+        global $wpdb;
+        $table_name = $wpdb->prefix . "clepxress";
+        $result = $wpdb->get_row("SELECT id FROM $table_name WHERE token = '$token'");
+        return (bool) $result;
+    }
+
+    public function getCleConfig($token) {
+        global $wpdb;
+        $table_name = $wpdb->prefix . "clepxress";
+        return $wpdb->get_row("SELECT data FROM $table_name WHERE token = '$token'");
     }
 
 }
 
 $joebiz = new CarouselLoanExpress();
-register_activation_hook(__FILE__, array($joebiz, 'add_roles_on_plugin_activation'));
