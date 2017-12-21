@@ -68,7 +68,6 @@ function LoanExpress() {
     this.stepTimeOfBusinessOperating = function(e) {
         $(e).closest('.step').find('.step-buttons').removeClass('active');
         $(e).addClass('active');
-
         this.container.data('time_of_business_operating', $(e).data('val'));
         this.nextStep(e);
     };
@@ -80,16 +79,31 @@ function LoanExpress() {
     };
     this.stepLoanOffers = function(e) {
         var loanOffersFrm = $("#loan-offers-frm");
+        var that = this;
         var term_condition_ok = $('[name="term_condition"]').is(":checked");
         if (loanOffersFrm.valid() && term_condition_ok) {
-            var phone = $('input[name="phone"]').val();
-            phone = phone.replace(/\D/g,'');
+            var name = $('input[name="name"]').val();
+            var email = $('input[name="email"]').val();
+            $('.offers-loader').show();
+            $.ajax({
+                type: 'POST',
+                url: ajaxurl,
+                data: {action: 'create_user', user_name:name, user_email:email},
+                success: function(resp) {
+                    $('.offers-loader').hide();
+                    if(!resp.errno){
+                        that.container.data('loan_author_id', resp.author_id);
+                        that.container.data('loan_customer_name', name);
+                        that.container.data('loan_customer_email', email);
+                        that.container.data('loan_customer_phone', $('input[name="phone"]').val());
+                        that.container.data('loan_customer_business', $('input[name="business"]').val());
+                        that.nextStep(e);
+                    }else{
+                        alert('Sorry we cant process your data.');
+                    }
+                }
+            });
             
-            this.container.data('loan_customer_name', $('input[name="name"]').val());
-            this.container.data('loan_customer_email', $('input[name="email"]').val());
-            this.container.data('loan_customer_phone', phone);
-            this.container.data('loan_customer_business', $('input[name="business"]').val());
-            this.nextStep(e);
         }
         if (loanOffersFrm.valid() && !term_condition_ok) {
             alert('Please tick the checkbox below to go to next step');
@@ -333,7 +347,6 @@ function LoanExpress() {
             }
         });
     };
-
 }
 
 var loanExpress;

@@ -23,6 +23,9 @@ class CarouselLoanExpress {
         add_action("wp_ajax_search_lender", array($this, 'search_lender'));
         add_action("wp_ajax_nopriv_search_lender", array($this, 'search_lender'));
 
+        add_action("wp_ajax_create_user", array($this, 'create_user'));
+        add_action("wp_ajax_nopriv_create_user", array($this, 'create_user'));
+
         add_action("wp_ajax_create_application", array($this, 'create_application'));
         add_action("wp_ajax_nopriv_create_application", array($this, 'create_application'));
 
@@ -38,11 +41,11 @@ class CarouselLoanExpress {
             global $user_ID;
             $query->set('author', $user_ID);
         }
-        if (!current_user_can('edit_users') ){
+        if (!current_user_can('edit_users')) {
             global $user_ID;
             $query->set('author', $user_ID);
         }
-        
+
         return $query;
     }
 
@@ -275,13 +278,13 @@ class CarouselLoanExpress {
             $data['loan_products'] = $loan_products;
         }
         $data['loan_amount'] = isset($data['loan_amount']) ? (is_numeric($data['loan_amount']) ? sprintf('$%s', number_format($data['loan_amount'])) : $data['loan_amount']) : '';
-        if(isset($data['loan_industry'])){
+        if (isset($data['loan_industry'])) {
             $data['loan_industry'] = $this->getLoanIndustryById($data['loan_industry']);
         }
-        if(isset($data['loan_terms'])){
+        if (isset($data['loan_terms'])) {
             $data['loan_terms'] = sprintf('%s months', $data['loan_terms']);
         }
-        
+
         if (isset($data['action'])) {
             unset($data['action']);
         }
@@ -417,6 +420,58 @@ class CarouselLoanExpress {
         die;
     }
 
+    public function create_user() {
+        header('Access-Control-Allow-Origin: *');
+        $data = array(
+            'errno' => 1,
+            'msg' => 'Sorry! 404 Not found'
+        );
+        extract($_POST);
+        if ($user_email && filter_var($user_email, FILTER_VALIDATE_EMAIL)) {
+            if (email_exists($user_email)) {
+                $userdata = get_user_by('email', $user_email);
+                $data['errno'] = 0;
+                $data['msg'] = __('Success');
+                $data['author_id'] = $userdata->ID;
+            } else {
+                $user_login = 'customer_' . md5($user_email . time());
+                $random_password = wp_generate_password($length = 12, $include_standard_special_chars = false);
+                $userdata = array(
+                    'user_login' => $user_login,
+                    'user_pass' => $random_password,
+                    'user_email' => $user_email,
+                    'display_name' => $user_name,
+                    'nickname' => $user_login,
+                    'role' => 'manage_application'
+                );
+                $user_id = wp_insert_user($userdata);
+                if (is_wp_error($user_id)) {
+                    $data['msg'] = __('Cant create customer');
+                } else {
+                    $subject = __('[Lend Click] Your account is created automate');
+                    $data['errno'] = 0;
+                    $data['msg'] = __('Success');
+                    $data['author_id'] = $user_id;
+                    // send mail
+                    $sitename = get_bloginfo('name');
+                    $siteemail = get_bloginfo('admin_email');
+                    $headers[] = sprintf('From: %s <%s>', $sitename, $siteemail);
+                    $headers[] = 'Content-Type: text/html; charset=UTF-8';
+                    $content = <<<EOD
+                    <p> Thanks you! </p>
+                    <p> Access login at: https://www.lendclick.com.au/wp-login.php</p>
+                    <p> Username: $user_email</p>
+                    <p> Password: $random_password</p>
+EOD;
+                    wp_mail($user_email, $subject, $content, $headers);
+                }
+            }
+        }
+        header('Content-Type: application/json');
+        echo json_encode($data);
+        die;
+    }
+
     public function create_application() {
         header('Access-Control-Allow-Origin: *');
         $data = array(
@@ -424,14 +479,13 @@ class CarouselLoanExpress {
             'msg' => 'Sorry! 404 Not found'
         );
         extract($_POST);
-
-        if ($loan_amount && $loan_terms && $loan_products && $loan_lenders && $loan_customer_email) {
+        if ($loan_amount && $loan_terms && $loan_products && $loan_lenders && $loan_customer_email && is_numeric($loan_author_id)) {
             $my_post = array(
                 'post_title' => sprintf('%s <%s>', $loan_customer_name, $loan_customer_email),
                 'post_content' => '',
                 'post_status' => 'publish',
                 'post_type' => 'application',
-                'post_author' => 1,
+                'post_author' => $loan_author_id,
             );
             // Insert the post into the database
             $result = wp_insert_post($my_post);
@@ -441,7 +495,6 @@ class CarouselLoanExpress {
                 $data['errno'] = 0;
                 $data['msg'] = __('Thank you, our lenders will contact you shortly');
                 update_post_meta($result, 'app_info', $_POST);
-                update_post_meta($result, 'app_email', $loan_customer_email);
                 update_post_meta($result, 'app_lenders', $loan_lenders);
                 $this->requestLenders($loan_lenders, $_POST);
             }
@@ -572,6 +625,27 @@ class CarouselLoanExpress {
             'rewrite' => array('slug' => 'application'),
             'capability_type' => 'application',
             'map_meta_cap' => true,
+            'capabilities' => array(
+                // meta caps (don't assign these to roles)
+                'edit_post' => 'edit_application',
+                'read_post' => 'read_application',
+                'delete_post' => 'delete_application',
+                // primitive/meta caps
+                'create_posts' => 'create_applications',
+                // primitive caps used outside of map_meta_cap()
+                'edit_posts' => 'edit_applications',
+                'edit_others_posts' => 'manage_applications',
+                'publish_posts' => 'publish_applications',
+                'read_private_posts' => 'read',
+                // primitive caps used inside of map_meta_cap()
+                'read' => 'read',
+                'delete_posts' => 'delete_applications',
+                'delete_private_posts' => 'delete_private_applications',
+                'delete_published_posts' => 'delete_published_applications',
+                'delete_others_posts' => 'manage_applications',
+                'edit_private_posts' => 'edit_applications',
+                'edit_published_posts' => 'edit_applications'
+            ),
             'query_var' => true,
             'menu_icon' => 'dashicons-groups',
             'menu_position' => 28,
@@ -660,16 +734,26 @@ class CarouselLoanExpress {
 
     public function add_role_caps() {
         $roles = array('manage_application', 'administrator');
+        $caps = array(
+            'edit_application',
+            'read_application',
+            'delete_application',
+            'create_applications',
+            'edit_applications',
+            //'manage_applications',
+            'publish_applications',
+            'read',
+            'delete_applications',
+            'delete_private_applications',
+            'delete_published_applications',
+            'edit_applications'
+        );
         foreach ($roles as $the_role) {
             $role = get_role($the_role);
             if ($role) {
-                $role->add_cap('read_application');
-                $role->add_cap('read_private_applications');
-                $role->add_cap('edit_application');
-                $role->add_cap('edit_applications');
-                $role->add_cap('edit_others_applications');
-                $role->add_cap('delete_others_applications');
-                $role->add_cap('delete_private_applications');
+                foreach ($caps as $cap){
+                    $role->add_cap($cap);
+                }
             }
         }
     }
@@ -677,12 +761,9 @@ class CarouselLoanExpress {
     public function add_roles_on_plugin_activation() {
         remove_role('manage_application');
         add_role('manage_application', 'Manage Application', array(
-            'read' => true,
-            'edit_posts' => false,
-            'delete_posts' => false,
-            'publish_posts' => false,
             'upload_files' => false,
             'edit_users' => false,
+            'level_0' => true,
         ));
     }
 
