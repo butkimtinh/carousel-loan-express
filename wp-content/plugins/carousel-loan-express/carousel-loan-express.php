@@ -43,30 +43,42 @@ class CarouselLoanExpress {
 
         add_action('wp_head', array($this, 'cloanexpress_js'));
         add_action('cloanexpress_event', array($this, 'cron'));
-        add_action('create_application_after', array($this, 'sendAppCompleteEmail'));
+        add_action('create_application_after', array($this, 'sendEmail'));
+        add_action('create_application_after', array($this, 'sendSms'));
 
         register_activation_hook(__FILE__, array($this, 'onActivation'));
         register_deactivation_hook(__FILE__, array($this, 'onDeactivation'));
         register_uninstall_hook(__FILE__, array(__CLASS__, 'onUninstall'));
     }
 
-    public function sendAppCompleteEmail($args) {
+    public function sendSms($args) {
         extract($args);
-        $notified = false;
-        $status = self::APP_STATUS_FAILURE;
-        if (!is_wp_error($result)) {
-            $subject = __('Your application is created success');
-            // send mail
-            $sitename = get_bloginfo('name');
-            $siteemail = get_bloginfo('admin_email');
-            $headers[] = sprintf('From: %s <%s>', $sitename, $siteemail);
-            $headers[] = 'Content-Type: text/html; charset=UTF-8';
-            $content = <<<EOD
-                <p> Thanks you! Your application is created success</p>
-EOD;
-            $notified = wp_mail($email, $subject, $content, $headers);
-            $status = self::APP_STATUS_COMPLETE;
-        }
+        $username = 'pabs';
+        $password = 'hola!23';
+        $ref = 'abc123';
+
+        $params = 'username=' . rawurlencode($username) .
+                '&password=' . rawurlencode($password) .
+                '&to=' . rawurlencode($phone) .
+                '&from=' . rawurlencode($source) .
+                '&message=' . rawurlencode($content) .
+                '&ref=' . rawurlencode($ref);
+        $ch = curl_init('https://api.smsbroadcast.com.au/api-adv.php');
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, $content);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        $output = curl_exec($ch);
+        curl_close($ch);
+        return $output;
+    }
+
+    public function sendEmail($args) {
+        extract($args);
+        $sitename = get_bloginfo('name');
+        $siteemail = get_bloginfo('admin_email');
+        $headers[] = sprintf('From: %s <%s>', $sitename, $siteemail);
+        $headers[] = 'Content-Type: text/html; charset=UTF-8';
+        $notified = wp_mail($email, $source, $content, $headers);
         $this->saveStatusCls($token, $status, $notified);
     }
 
@@ -578,17 +590,20 @@ EOD;
             );
             // Insert the post into the database
             $result = wp_insert_post($my_post);
-            do_action('create_application_after', array(
-                'email' => $loan_customer_email,
-                'token' => $cletoken,
-                'result' => $result
-            ));
+
 
             if ($result == 0 || $result instanceof WP_Error) {
                 $data['msg'] = __('Sorry we cant create an application at the moment. Please try again later.');
+                
+                $status = self::APP_STATUS_FAILURE;
+                $content = 'Your application cant is created';
             } else {
                 $data['errno'] = 0;
                 $data['msg'] = __('Thank you, our lenders will contact you shortly');
+                
+                $status = self::APP_STATUS_COMPLETE;
+                $content = 'Your application is created success';
+                
                 update_post_meta($result, 'app_info', $_POST);
                 update_post_meta($result, 'app_lenders', $loan_lenders);
                 $this->requestLenders($loan_lenders, $_POST);
@@ -596,6 +611,16 @@ EOD;
                     $this->clearCleConfig($cletoken);
                 }
             }
+
+            $phone = preg_replace('/\D/', '', $loan_customer_phone);
+            do_action('create_application_after', array(
+                'email' => $loan_customer_email,
+                'phone' => $phone,
+                'token' => $cletoken,
+                'content' => $content,
+                'status' => $status,
+                'source' => __('LendClick Notification')
+            ));
         }
         header('Content-Type: application/json');
         echo json_encode($data);
@@ -956,7 +981,7 @@ EOD;
         $current_time = time();
         $created_at = date('Y-m-d H:i:s', $current_time);
         $expired_at = date('Y-m-d H:i:s', $current_time + 7 * 24 * 60 * 60);
-        $wpdb->update($table_name, array('email' => $email, 'status' => $status, 'notified' => $notified, 'updated_at' => $created_at, 'expired_at' => $expired_at), array('token' => $token));
+        $wpdb->update($table_name, array('status' => $status, 'notified' => $notified, 'updated_at' => $created_at, 'expired_at' => $expired_at), array('token' => $token));
     }
 
     public function hasCleToken($token) {
