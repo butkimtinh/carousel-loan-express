@@ -920,6 +920,7 @@ EOD;
 
     public function clearCleConfig($token) {
         unset($_COOKIE['_cletoken']);
+        unset($_COOKIE[$token]);
         unset($_SESSION['_cletoken']);
         $this->deleteCleConfig($token);
     }

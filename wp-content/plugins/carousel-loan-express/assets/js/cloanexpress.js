@@ -343,6 +343,8 @@ function LoanExpress(config) {
         this.container.data('business_phone_number', $('[name="business_phone_number"]').val());
         this.container.data('best_time_to_reach', $('[name="best_time_to_reach"]').val());
         this.container.data('action', 'create_application');
+        this.container.data('cletoken', cletoken);
+        
         $.ajax({
             type: 'POST',
             url: ajaxurl,
