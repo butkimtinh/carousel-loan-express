@@ -852,6 +852,7 @@ EOD;
                 `token` varchar(32) NOT NULL,
                 `data` text NOT NULL,
                 `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                `updated_at` datetime NOT NULL,
                 `expired_at` datetime NOT NULL,
 		PRIMARY KEY (`id`),
                 KEY `token` (`token`)
@@ -884,9 +885,9 @@ EOD;
         $created_at = date('Y-m-d H:i:s', $current_time);
         $expired_at = date('Y-m-d H:i:s', $current_time + 7 * 24 * 60 * 60);
         if ($this->hasCleToken($token)) {
-            $r = $wpdb->update($table_name, array('data' => $data, 'created_at' => $created_at, 'expired_at' => $expired_at), array('token' => $token));
+            $r = $wpdb->update($table_name, array('data' => $data, 'updated_at' => $created_at, 'expired_at' => $expired_at), array('token' => $token));
         } else {
-            $r = $wpdb->insert($table_name, array('token' => $token, 'data' => $data, 'created_at' => $created_at, 'expired_at' => $expired_at));
+            $r = $wpdb->insert($table_name, array('token' => $token, 'data' => $data,'updated_at' => $created_at, 'created_at' => $created_at, 'expired_at' => $expired_at));
         }
         return $r;
     }

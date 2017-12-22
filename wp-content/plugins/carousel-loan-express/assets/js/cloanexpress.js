@@ -53,10 +53,11 @@ function LoanExpress(config) {
     this.config = config;
     this.loanSlider;
     this.container;
-    this.lenders = [];
+    this.stepValid = [];
     this.initialize = function() {
         this.container = $('.cloanexpress');
         this.container.data(this.config.data);
+        this.initStep();
         this.loanSlider = new LoanExpresSlider({'max': 1000000, 'min': 5000, 'step': 5000, 'start': 500000});
         this.loanSlider.initialize();
 
@@ -65,13 +66,14 @@ function LoanExpress(config) {
             this.loanSlider.val(loan_amount);
         }
         $.cookie('_cletoken', cletoken);
-    };
-    this.stepLoanSlider = function(e) {
-        var time_of_business_operating = this.container.data('time_of_business_operating');
-        if (time_of_business_operating) {
-            $('.loan-time-of-business-operating step-buttons').removeClass('active');
-            $('.loan-time-of-business-operating [data-val="' + time_of_business_operating + '"]').addClass('active');
+        if (this.config.stepValid) {
+            this.stepValid = this.config.stepValid.split(',');
+            $(this.config.stepValid).data('valid', true);
+            this.step(document.getElementById(this.config.step));
         }
+    };
+    
+    this.stepLoanSlider = function(e) {
         if (this.loanSlider.isValid()) {
             this.container.data('loan_amount', this.loanSlider.val());
             this.nextStep(e);
@@ -79,11 +81,6 @@ function LoanExpress(config) {
     };
 
     this.stepTimeOfBusinessOperating = function(e) {
-        var loan_average_revenue = this.container.data('loan_average_revenue');
-        if (loan_average_revenue) {
-            $('.loan-monthly-revenue step-buttons').removeClass('active');
-            $('.loan-monthly-revenue [data-val="' + loan_average_revenue + '"]').addClass('active');
-        }
         $(e).closest('.step').find('.step-buttons').removeClass('active');
         $(e).addClass('active');
         this.container.data('time_of_business_operating', $(e).data('val'));
@@ -91,53 +88,25 @@ function LoanExpress(config) {
     };
 
     this.stepLoanAverageRevenue = function(e) {
-        var loan_customer_name = this.container.data('loan_customer_name');
-        if (loan_customer_name) {
-            $('.loan-offers input[name="name"]').val(loan_customer_name);
-        }
-
-        var loan_customer_email = this.container.data('loan_customer_email');
-        if (loan_customer_email) {
-            $('.loan-offers input[name="email"]').val(loan_customer_email);
-        }
-
-        var loan_customer_phone = this.container.data('loan_customer_phone');
-        if (loan_customer_phone) {
-            $('.loan-offers input[name="phone"]').val(loan_customer_phone);
-        }
-
-        var loan_customer_business = this.container.data('loan_customer_business');
-        if (loan_customer_business) {
-            $('.loan-offers input[name="business"]').val(loan_customer_business);
-        }
-
         $(e).closest('.step').find('.step-buttons').removeClass('active');
         $(e).addClass('active');
         this.container.data('loan_average_revenue', $(e).data('val'));
         this.nextStep(e);
     };
     this.stepLoanOffers = function(e) {
-        var loan_dob = this.container.data('loan_dob');
-        if (loan_dob) {
-            var ex = loan_dob.split("/");
-            var birth_day = ex[0], birth_month = ex[1], birth_year = ex[2];
-            $('.loan-dob [name="birth_day"]').val(birth_day);
-            $('.loan-dob [name="birth_month"]').val(birth_month);
-            $('.loan-dob [name="birth_year"]').val(birth_year);
-        }
         var loanOffersFrm = $("#loan-offers-frm");
         var that = this;
         var term_condition_ok = $('[name="term_condition"]').is(":checked");
         if (loanOffersFrm.valid() && term_condition_ok) {
             var name = $('input[name="name"]').val();
             var email = $('input[name="email"]').val();
-            $('.offers-loader').show();
+            that.showLoader();
             $.ajax({
                 type: 'POST',
                 url: ajaxurl,
-                data: {action: 'create_user', user_name: name, user_email: email, cletoken:cletoken},
+                data: {action: 'create_user', user_name: name, user_email: email, cletoken: cletoken},
                 success: function(resp) {
-                    $('.offers-loader').hide();
+                    that.hideLoader();
                     if (!resp.errno) {
                         that.container.data('loan_author_id', resp.author_id);
                         that.container.data('loan_customer_name', name);
@@ -157,14 +126,6 @@ function LoanExpress(config) {
         }
     };
     this.stepDob = function(e) {
-        var loan_products_length = this.container.data('loan_products_length');
-        if (loan_products_length) {
-            $('.loan-products .step-buttons').removeClass('active');
-            for (var i = 0; i < loan_products_length; i++) {
-                var productId = this.container.data('loan_products[' + i + ']');
-                $('.loan-products [data-val="' + productId + '"]').addClass('active');
-            }
-        }
         var dobFrm = $("#dob-frm");
         dobFrm.validate({
             messages: {},
@@ -185,11 +146,6 @@ function LoanExpress(config) {
         $(e).toggleClass('active');
     };
     this.stepLoanProducts = function(e) {
-        var loan_terms = this.container.data('loan_terms');
-        if (loan_terms) {
-            $('.loan-terms .step-buttons').removeClass('active');
-            $('.loan-terms [data-val="' + loan_terms + '"]').addClass('active');
-        }
         var active = $('.loan-products .active');
         that = this;
         if (active.length > 0) {
@@ -203,10 +159,6 @@ function LoanExpress(config) {
         }
     };
     this.stepLoanTerm = function(e) {
-        var loan_industry = this.container.data('loan_industry');
-        if (loan_industry) {
-            $('.loan-industry [name="industry_ID"]').val(loan_industry);
-        }
         $(e).closest('.step').find('.step-buttons').removeClass('active');
         $(e).addClass('active');
         this.container.data('loan_terms', $(e).data('val'));
@@ -230,10 +182,6 @@ function LoanExpress(config) {
         }
     };
     this.stepLoanDrivingLicenseNumber = function(e) {
-        var loan_abn = this.container.data('loan_abn');
-        if (loan_abn) {
-            $('.loan-abn [name="abn_num"]').val(loan_abn);
-        }
         this.container.data('loan_driving_license_number', $('[name="driver_license"]').val());
         this.nextStep(e);
     };
@@ -320,15 +268,6 @@ function LoanExpress(config) {
         });
     };
     this.stepAgree = function(e) {
-        var business_phone_number = this.container.data('business_phone_number');
-        if(business_phone_number){
-            $('.loan-additional [name="business_phone_number"]').val(business_phone_number);
-        }
-        var best_time_to_reach = this.container.data('best_time_to_reach');
-        if(best_time_to_reach){
-            $('.loan-additional [name="best_time_to_reach"]').val(best_time_to_reach);
-        }
-        
         var disclaimer_check_ok = $('[name="disclaimer-check"]').is(":checked");
         if (disclaimer_check_ok) {
             $('.modal').hide();
@@ -344,7 +283,7 @@ function LoanExpress(config) {
         this.container.data('best_time_to_reach', $('[name="best_time_to_reach"]').val());
         this.container.data('action', 'create_application');
         this.container.data('cletoken', cletoken);
-        
+
         $.ajax({
             type: 'POST',
             url: ajaxurl,
@@ -352,6 +291,8 @@ function LoanExpress(config) {
             success: function(resp) {
                 $('.additional-loader').hide();
                 if (!resp.errno) {
+                    $.removeCookie('cletoken');
+                    $.removeCookie(cletoken);
                     that.nextStep(e);
                 } else {
                     alert(resp.msg);
@@ -363,6 +304,7 @@ function LoanExpress(config) {
         var currentStep = $(e).closest('.step');
         var nextStep = currentStep.next('.step');
         var that = this;
+        that.stepValid.push('#' + currentStep.attr('id'));
         if (nextStep.length) {
             var width = currentStep.outerWidth(true);
             var stepId = '#' + nextStep.attr('id');
@@ -376,7 +318,7 @@ function LoanExpress(config) {
                     } else {
                         $('.loan-indicators').css({display: 'none'});
                     }
-                    that.saveStep(stepId);
+                    that.saveStep(nextStep.attr('id'));
                 }
             });
             $.cookie('current_step', stepId);
@@ -389,6 +331,7 @@ function LoanExpress(config) {
     this.saveStep = function(stepId) {
         var cledata = JSON.stringify({
             step: stepId,
+            stepValid: this.stepValid.join(),
             data: this.container.data()
         });
         var data = {
@@ -465,6 +408,80 @@ function LoanExpress(config) {
                 }
             }
         });
+    };
+    this.initStep = function() {
+        var time_of_business_operating = this.container.data('time_of_business_operating');
+        if (time_of_business_operating) {
+            $('.loan-time-of-business-operating step-buttons').removeClass('active');
+            $('.loan-time-of-business-operating [data-val="' + time_of_business_operating + '"]').addClass('active');
+        }
+        var loan_average_revenue = this.container.data('loan_average_revenue');
+        if (loan_average_revenue) {
+            $('.loan-monthly-revenue step-buttons').removeClass('active');
+            $('.loan-monthly-revenue [data-val="' + loan_average_revenue + '"]').addClass('active');
+        }
+        var loan_customer_name = this.container.data('loan_customer_name');
+        if (loan_customer_name) {
+            $('.loan-offers input[name="name"]').val(loan_customer_name);
+        }
+
+        var loan_customer_email = this.container.data('loan_customer_email');
+        if (loan_customer_email) {
+            $('.loan-offers input[name="email"]').val(loan_customer_email);
+        }
+
+        var loan_customer_phone = this.container.data('loan_customer_phone');
+        if (loan_customer_phone) {
+            $('.loan-offers input[name="phone"]').val(loan_customer_phone);
+        }
+
+        var loan_customer_business = this.container.data('loan_customer_business');
+        if (loan_customer_business) {
+            $('.loan-offers input[name="business"]').val(loan_customer_business);
+        }
+
+        var loan_dob = this.container.data('loan_dob');
+        if (loan_dob) {
+            var ex = loan_dob.split("/");
+            var birth_day = ex[0], birth_month = ex[1], birth_year = ex[2];
+            $('.loan-dob [name="birth_day"]').val(birth_day);
+            $('.loan-dob [name="birth_month"]').val(birth_month);
+            $('.loan-dob [name="birth_year"]').val(birth_year);
+        }
+
+        var loan_products_length = this.container.data('loan_products_length');
+        if (loan_products_length) {
+            $('.loan-products .step-buttons').removeClass('active');
+            for (var i = 0; i < loan_products_length; i++) {
+                var productId = this.container.data('loan_products[' + i + ']');
+                $('.loan-products [data-val="' + productId + '"]').addClass('active');
+            }
+        }
+
+        var loan_terms = this.container.data('loan_terms');
+        if (loan_terms) {
+            $('.loan-terms .step-buttons').removeClass('active');
+            $('.loan-terms [data-val="' + loan_terms + '"]').addClass('active');
+        }
+
+        var loan_industry = this.container.data('loan_industry');
+        if (loan_industry) {
+            $('.loan-industry [name="industry_ID"]').val(loan_industry);
+        }
+
+        var loan_abn = this.container.data('loan_abn');
+        if (loan_abn) {
+            $('.loan-abn [name="abn_num"]').val(loan_abn);
+        }
+
+        var business_phone_number = this.container.data('business_phone_number');
+        if (business_phone_number) {
+            $('.loan-additional [name="business_phone_number"]').val(business_phone_number);
+        }
+        var best_time_to_reach = this.container.data('best_time_to_reach');
+        if (best_time_to_reach) {
+            $('.loan-additional [name="best_time_to_reach"]').val(best_time_to_reach);
+        }
     };
     this.showLoader = function() {
         $('.loan-loader').show();
