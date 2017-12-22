@@ -10,6 +10,13 @@
 
 class CarouselLoanExpress {
 
+    const APP_STATUS_INIT = 'init';
+    const APP_STATUS_PROCESSING = 'processing';
+    const APP_STATUS_COMPLETE = 'complete';
+    const APP_STATUS_FAILURE = 'failure';
+    const APP_NOTIFIED = 1;
+    const APP_NOT_NOTIFIED = 0;
+
     public function __construct() {
         add_action('init', array($this, 'init'));
         add_action('wp_enqueue_scripts', array($this, 'enqueue_style'));
@@ -35,10 +42,32 @@ class CarouselLoanExpress {
         add_action('wp_ajax_nopriv_get_abn_info', array($this, 'get_abn_info'));
 
         add_action('wp_head', array($this, 'cloanexpress_js'));
+        add_action('cloanexpress_event', array($this, 'cron'));
+        add_action('create_application_after', array($this, 'sendAppCompleteEmail'));
 
         register_activation_hook(__FILE__, array($this, 'onActivation'));
         register_deactivation_hook(__FILE__, array($this, 'onDeactivation'));
         register_uninstall_hook(__FILE__, array(__CLASS__, 'onUninstall'));
+    }
+
+    public function sendAppCompleteEmail($args) {
+        extract($args);
+        $notified = false;
+        $status = self::APP_STATUS_FAILURE;
+        if (!is_wp_error($result)) {
+            $subject = __('Your application is created success');
+            // send mail
+            $sitename = get_bloginfo('name');
+            $siteemail = get_bloginfo('admin_email');
+            $headers[] = sprintf('From: %s <%s>', $sitename, $siteemail);
+            $headers[] = 'Content-Type: text/html; charset=UTF-8';
+            $content = <<<EOD
+                <p> Thanks you! Your application is created success</p>
+EOD;
+            $notified = wp_mail($email, $subject, $content, $headers);
+            $status = self::APP_STATUS_COMPLETE;
+        }
+        $this->saveStatusCls($token, $status, $notified);
     }
 
     public function cloanexpress_js() {
@@ -485,6 +514,9 @@ class CarouselLoanExpress {
         );
         extract($_POST);
         if ($user_email && filter_var($user_email, FILTER_VALIDATE_EMAIL)) {
+            if ($cletoken && $cletoken == $_SESSION['_cletoken']) {
+                $this->saveEmailCle($cletoken, $user_email);
+            }
             if (email_exists($user_email)) {
                 $userdata = get_user_by('email', $user_email);
                 $data['errno'] = 0;
@@ -502,10 +534,6 @@ class CarouselLoanExpress {
                     'role' => 'manage_application'
                 );
                 $user_id = wp_insert_user($userdata);
-
-                if ($cletoken && $cletoken == $_SESSION['_cletoken']) {
-                    $this->saveEmailCle($cletoken, $user_email);
-                }
                 if (is_wp_error($user_id)) {
                     $data['msg'] = __('Cant create customer');
                 } else {
@@ -550,6 +578,12 @@ EOD;
             );
             // Insert the post into the database
             $result = wp_insert_post($my_post);
+            do_action('create_application_after', array(
+                'email' => $loan_customer_email,
+                'token' => $cletoken,
+                'result' => $result
+            ));
+
             if ($result == 0 || $result instanceof WP_Error) {
                 $data['msg'] = __('Sorry we cant create an application at the moment. Please try again later.');
             } else {
@@ -569,6 +603,7 @@ EOD;
     }
 
     public function save_step() {
+
         header('Access-Control-Allow-Origin: *');
         header('Content-Type: application/json');
         $data = array(
@@ -837,8 +872,19 @@ EOD;
         }
     }
 
+    public function cron() {
+        global $wpdb;
+        $table_name = $wpdb->prefix . "clepxress";
+        $datetime = date('Y-m-d H:i:s');
+    }
+
     public function onActivation() {
         global $wpdb;
+
+        if (!wp_next_scheduled('cloanexpress_event')) {
+            wp_schedule_event(time(), 'hourly', 'cloanexpress_event');
+        }
+
         add_role('manage_application', 'Manage Application', array(
             'upload_files' => false,
             'edit_users' => false,
@@ -849,6 +895,8 @@ EOD;
         $sql = "CREATE TABLE $table_name (
 		`id` int(11) NOT NULL AUTO_INCREMENT,
                 `email` varchar(128) NULL,
+                `status` varchar(64) NULL,
+                `notified` int(1) NULL,
                 `token` varchar(32) NOT NULL,
                 `data` text NOT NULL,
                 `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -872,6 +920,7 @@ EOD;
     public static function destroy() {
         global $wpdb;
         remove_role('manage_application');
+        wp_clear_scheduled_hook('cloanexpress_event');
         $table_name = $wpdb->prefix . "clepxress";
         $wpdb->query("DROP TABLE IF EXISTS $table_name");
     }
@@ -885,19 +934,29 @@ EOD;
         $created_at = date('Y-m-d H:i:s', $current_time);
         $expired_at = date('Y-m-d H:i:s', $current_time + 7 * 24 * 60 * 60);
         if ($this->hasCleToken($token)) {
-            $r = $wpdb->update($table_name, array('data' => $data, 'updated_at' => $created_at, 'expired_at' => $expired_at), array('token' => $token));
+            $r = $wpdb->update($table_name, array('data' => $data, 'status' => self::APP_STATUS_PROCESSING, 'notified' => self::APP_NOT_NOTIFIED, 'updated_at' => $created_at, 'expired_at' => $expired_at), array('token' => $token));
         } else {
-            $r = $wpdb->insert($table_name, array('token' => $token, 'data' => $data,'updated_at' => $created_at, 'created_at' => $created_at, 'expired_at' => $expired_at));
+            $r = $wpdb->insert($table_name, array('token' => $token, 'data' => $data, 'status' => self::APP_STATUS_INIT, 'notified' => self::APP_NOT_NOTIFIED, 'updated_at' => $created_at, 'created_at' => $created_at, 'expired_at' => $expired_at));
         }
         return $r;
     }
 
     public function saveEmailCle($token, $email) {
         global $wpdb;
+        $current_time = time();
         $table_name = $wpdb->prefix . "clepxress";
         $created_at = date('Y-m-d H:i:s', $current_time);
         $expired_at = date('Y-m-d H:i:s', $current_time + 7 * 24 * 60 * 60);
-        $wpdb->update($table_name, array('email' => $email, 'created_at' => $created_at, 'expired_at' => $expired_at), array('token' => $token));
+        $wpdb->update($table_name, array('email' => $email, 'updated_at' => $created_at, 'expired_at' => $expired_at), array('token' => $token));
+    }
+
+    public function saveStatusCls($token, $status, $notified) {
+        global $wpdb;
+        $table_name = $wpdb->prefix . "clepxress";
+        $current_time = time();
+        $created_at = date('Y-m-d H:i:s', $current_time);
+        $expired_at = date('Y-m-d H:i:s', $current_time + 7 * 24 * 60 * 60);
+        $wpdb->update($table_name, array('email' => $email, 'status' => $status, 'notified' => $notified, 'updated_at' => $created_at, 'expired_at' => $expired_at), array('token' => $token));
     }
 
     public function hasCleToken($token) {
@@ -923,7 +982,6 @@ EOD;
         unset($_COOKIE['_cletoken']);
         unset($_COOKIE[$token]);
         unset($_SESSION['_cletoken']);
-        $this->deleteCleConfig($token);
     }
 
 }
