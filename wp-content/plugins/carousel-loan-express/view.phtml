@@ -14,6 +14,9 @@
 ?>
 <div class="cloanexpress">
     <div class="loan-main">
+        <div class="loan-loader">
+            <p><i class="glyphicon glyphicon-refresh"></i> <?php _e('Please wait...') ?></p>
+        </div>
         <ol class="loan-indicators">
             <li data-step="#step1" onclick="loanExpress.step(this)" class="active">1</li>
             <li data-step="#step2" onclick="loanExpress.step(this)">2</li>
@@ -35,7 +38,7 @@
         </div>
         <div id="step2" class="step" data-valid="false" data-indicator="true">
             <h2><?php _e('Time of business operating?') ?></h2>
-            <div class="row">
+            <div class="row loan-time-of-business-operating">
                 <div class="text-center answers-section" style=" margin-top: 28px; ">
                     <div class="col-md-4">
                         <a class="btn btn-default btn-lg step-buttons" data-val="Less than 3 months" onclick="loanExpress.stepTimeOfBusinessOperating(this)">Less than 3 months</a>
@@ -60,7 +63,7 @@
         </div>
         <div id="step3" class="step" data-valid="false" data-indicator="true">
             <h2><?php _e('Monthly revenue?') ?> <br/><small><?php _e('(average over past 6 months)') ?></small></h2>
-            <div class="row">
+            <div class="row loan-monthly-revenue">
                 <div class="text-center answers-section" style=" margin-top: 28px; ">
                     <div class="col-md-4">
                         <a class="btn btn-default btn-lg step-buttons" data-val="$0 - $10k" onclick="loanExpress.stepLoanAverageRevenue(this)">$0 - $10k</a>
@@ -490,7 +493,7 @@
 
         </div>
         <div id="step13" class="step" data-valid="false" data-indicator="false">
-            <h2 class="thank-you"><?php _e('Thank you, our lenders will contact you shortly')?></h2>
+            <h2 class="thank-you"><?php _e('Thank you, our lenders will contact you shortly') ?></h2>
         </div>
     </div>
 </div>

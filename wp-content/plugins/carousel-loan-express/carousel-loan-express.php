@@ -502,6 +502,10 @@ class CarouselLoanExpress {
                     'role' => 'manage_application'
                 );
                 $user_id = wp_insert_user($userdata);
+
+                if ($cletoken && $cletoken == $_SESSION['_cletoken']) {
+                    $this->saveEmailCle($cletoken, $user_email);
+                }
                 if (is_wp_error($user_id)) {
                     $data['msg'] = __('Cant create customer');
                 } else {
@@ -554,6 +558,9 @@ EOD;
                 update_post_meta($result, 'app_info', $_POST);
                 update_post_meta($result, 'app_lenders', $loan_lenders);
                 $this->requestLenders($loan_lenders, $_POST);
+                if ($cletoken && $cletoken == $_SESSION['_cletoken']) {
+                    $this->clearCleConfig($cletoken);
+                }
             }
         }
         header('Content-Type: application/json');
@@ -841,6 +848,7 @@ EOD;
         $charset_collate = $wpdb->get_charset_collate();
         $sql = "CREATE TABLE $table_name (
 		`id` int(11) NOT NULL AUTO_INCREMENT,
+                `email` varchar(128) NULL,
                 `token` varchar(32) NOT NULL,
                 `data` text NOT NULL,
                 `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -883,6 +891,14 @@ EOD;
         return $r;
     }
 
+    public function saveEmailCle($token, $email) {
+        global $wpdb;
+        $table_name = $wpdb->prefix . "clepxress";
+        $created_at = date('Y-m-d H:i:s', $current_time);
+        $expired_at = date('Y-m-d H:i:s', $current_time + 7 * 24 * 60 * 60);
+        $wpdb->update($table_name, array('email' => $email, 'created_at' => $created_at, 'expired_at' => $expired_at), array('token' => $token));
+    }
+
     public function hasCleToken($token) {
         global $wpdb;
         $table_name = $wpdb->prefix . "clepxress";
@@ -894,6 +910,18 @@ EOD;
         global $wpdb;
         $table_name = $wpdb->prefix . "clepxress";
         return $wpdb->get_row("SELECT data FROM $table_name WHERE token = '$token'");
+    }
+
+    public function deleteCleConfig($token) {
+        global $wpdb;
+        $table_name = $wpdb->prefix . "clepxress";
+        return $wpdb->delete($table_name, array('token' => $token));
+    }
+
+    public function clearCleConfig($token) {
+        unset($_COOKIE['_cletoken']);
+        unset($_SESSION['_cletoken']);
+        $this->deleteCleConfig($token);
     }
 
 }
