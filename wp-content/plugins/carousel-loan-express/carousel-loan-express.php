@@ -607,7 +607,7 @@ EOD;
                 $data['errno'] = 0;
                 $data['msg'] = __('Thank you, our lenders will contact you shortly');
                 $status = self::APP_STATUS_COMPLETE;
-                $content = __('Your application is created success');
+                $content = __('Thank you, your application is created success and our lenders will contact you shortly');
                 update_post_meta($result, 'app_info', $_POST);
 //                update_post_meta($result, 'app_lenders', $loan_lenders);
 //                $this->requestLenders($loan_lenders, $_POST);
@@ -903,16 +903,19 @@ EOD;
     public function cloanexpress_schedule() {
         global $wpdb;
         $table_name = $wpdb->prefix . "clepxress";
-        $datetime = date('Y-m-d H:i:s');
-
-        do_action('lendclick_notification', array(
-            'email' => $email,
-            'phone' => $phone,
-            'token' => $cletoken,
-            'content' => $content,
-            'status' => $status,
-            'source' => __('LendClick Notification')
-        ));
+        $results = $wpdb->get_results('SELECT * FROM '.$table_name.' WHERE updated_at < (NOW()- INTERVAL 6 HOUR) and status = \''.self::APP_STATUS_PROCESSING.'\' and `notified` = '.self::APP_NOTIFIED);
+        foreach ($results as $object) {
+            $link = get_home_url() . '?_cletoken' . $object->token;
+            do_action('lendclick_notification', array(
+                'email' => $object->email,
+                'phone' => $object->phone,
+                'token' => $object->token,
+                'content' => sprintf('Please complete this form: <a href="%s" target="_blank">%s</a>', $link, $link),
+                'status' => self::APP_STATUS_FAILURE,
+                'source' => __('LendClick Notification')
+            ));
+            sleep(1);
+        }
     }
 
     public function onActivation() {
