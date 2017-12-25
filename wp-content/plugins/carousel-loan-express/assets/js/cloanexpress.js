@@ -217,8 +217,13 @@ function LoanExpress(config) {
             if (abn_num_valid) {
                 this.container.data('loan_abn', $('[name="abn_num"]').val());
             }
+            var abn_num =  $('[name="abn_num"]').val();
+            if(!abn_num.length){
+                alert('Please enter number abn to check');
+            }
+        }else{
+            this.nextStep(e);
         }
-        this.nextStep(e);
         //this.loadRelevantLender();
     };
     this.selectLender = function(e) {

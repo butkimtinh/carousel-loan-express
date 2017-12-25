@@ -96,7 +96,10 @@ class CarouselLoanExpress {
                     loanExpress = new LoanExpress(cleconfig);
                     loanExpress.initialize();
                 }
-            });
+                <?php if(isset($_GET['_cletoken'])):?>
+                    $('html,body').animate({scrollTop: $('.cloanexpress').offset().top - 150}, 'slow');
+                <?php endif?>
+                });
         </script>
         <?php
     }
@@ -903,7 +906,7 @@ EOD;
     public function cloanexpress_schedule() {
         global $wpdb;
         $table_name = $wpdb->prefix . "clepxress";
-        $sql = 'SELECT * FROM '.$table_name.' WHERE updated_at < (NOW()- INTERVAL 6 HOUR) and status = \'processing\' and notified = 0';
+        $sql = 'SELECT * FROM '.$table_name.' WHERE updated_at < (NOW()- INTERVAL 24 HOUR) and status = \'processing\' and notified = 0';
         $results = $wpdb->get_results($sql);
         foreach ($results as $object) {
             $link = get_home_url() . '?_cletoken=' . $object->token;
