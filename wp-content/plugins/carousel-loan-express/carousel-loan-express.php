@@ -903,17 +903,19 @@ EOD;
     public function cloanexpress_schedule() {
         global $wpdb;
         $table_name = $wpdb->prefix . "clepxress";
-        $results = $wpdb->get_results('SELECT * FROM '.$table_name.' WHERE updated_at < (NOW()- INTERVAL 6 HOUR) and status = \''.self::APP_STATUS_PROCESSING.'\' and `notified` = '.self::APP_NOTIFIED);
+        $sql = 'SELECT * FROM '.$table_name.' WHERE updated_at < (NOW()- INTERVAL 6 HOUR) and status = \'processing\' and notified = 0';
+        $results = $wpdb->get_results($sql);
         foreach ($results as $object) {
-            $link = get_home_url() . '?_cletoken' . $object->token;
-            do_action('lendclick_notification', array(
+            $link = get_home_url() . '?_cletoken=' . $object->token;
+            $params = array(
                 'email' => $object->email,
                 'phone' => $object->phone,
                 'token' => $object->token,
                 'content' => sprintf('Please complete this form: <a href="%s" target="_blank">%s</a>', $link, $link),
-                'status' => self::APP_STATUS_FAILURE,
+                'status' => 'failure',
                 'source' => __('LendClick Notification')
-            ));
+            );
+            do_action('lendclick_notification', $params);
             sleep(1);
         }
     }
