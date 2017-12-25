@@ -407,7 +407,7 @@
                     <div class="row">
                         <div class="col-md-8 col-md-offset-2">
                             <div class="form-group input abn-field-container">
-                                <input maxlength="11" class="form-control step-input" id="abn_num" name="abn_num" type="tel" placeholder="Enter your ABN" data-valid="false" onchange="loanExpress.verifyAbn(this)">
+                                <input maxlength="11" class="form-control step-input" id="abn_num" name="abn_num" type="text" placeholder="Enter your ABN" data-valid="false" onchange="loanExpress.verifyAbn(this)">
                                 <div>
                                     <span id="abn_num_error_text" class="error_input_text"><?php _e('Enter a valid ABN number') ?><br>or <a onclick="loanExpress.stepAbn(this, true)" id="skip-abn" data-slide="next" href="javascript:void()" style="text-decoration:underline;color:#000;" skip="">Skip</a></span>
                                 </div>
@@ -436,7 +436,7 @@
                     <i class="fa fa-chevron-left" aria-hidden="true"></i> Back</a>
             </div>
         </div>
-        <div id="step11" class="step" data-valid="false" data-indicator="false">
+<!--        <div id="step11" class="step" data-valid="false" data-indicator="false">
             <h2 class="small-margin-top"><?php _e('Select up to 3 lenders and click "Proceed"') ?></h2>
             <div class="loan-lenders">
                 <div class="lender-loader">
@@ -450,10 +450,10 @@
                     <a class="btn btn-default btn-sm step-buttons" role="button" href="javascript:void()" data-step="#step10" onclick="loanExpress.step(this)"><i class="fa fa-chevron-left" aria-hidden="true"></i> Back</a>
                 </div>
             </div>
-            <!-- Modal -->
+             Modal 
             <div class="modal fade in" role="dialog" style="position: absolute; background-color: rgba(0,0,0,0.7)">
                 <div class="modal-dialog">
-                    <!-- Modal content-->
+                     Modal content
                     <div class="modal-content">
                         <div class="modal-header">
                             <button type="button" class="close" data-dismiss="modal">&times;</button>
@@ -470,8 +470,8 @@
                     </div>
                 </div>
             </div>
-        </div>
-        <div id="step12" class="step" data-valid="false" data-indicator="false">
+        </div>-->
+        <div id="step11" class="step" data-valid="false" data-indicator="false">
             <h2 class="modal-title"><?php _e('Wait, one last thing before your chosen lenders call you!') ?></h2>
             <div class="loan-additional">
                 <div class="additional-loader">
@@ -490,7 +490,7 @@
             </div>
 
         </div>
-        <div id="step13" class="step" data-valid="false" data-indicator="false">
+        <div id="step12" class="step" data-valid="false" data-indicator="false">
             <h2 class="thank-you"><?php _e('Thank you, our lenders will contact you shortly') ?></h2>
         </div>
     </div>

@@ -589,7 +589,7 @@ EOD;
             'msg' => 'Sorry! 404 Not found'
         );
         extract($_POST);
-        if ($loan_amount && $loan_terms && $loan_products && $loan_lenders && $loan_customer_email && is_numeric($loan_author_id)) {
+        if ($loan_amount && $loan_terms && $loan_products && $loan_customer_email && is_numeric($loan_author_id)) {
             $my_post = array(
                 'post_title' => sprintf('%s <%s>', $loan_customer_name, $loan_customer_email),
                 'post_content' => '',
@@ -609,8 +609,8 @@ EOD;
                 $status = self::APP_STATUS_COMPLETE;
                 $content = __('Your application is created success');
                 update_post_meta($result, 'app_info', $_POST);
-                update_post_meta($result, 'app_lenders', $loan_lenders);
-                $this->requestLenders($loan_lenders, $_POST);
+//                update_post_meta($result, 'app_lenders', $loan_lenders);
+//                $this->requestLenders($loan_lenders, $_POST);
                 if ($cletoken && $cletoken == $_SESSION['_cletoken']) {
                     $this->clearCleConfig($cletoken);
                 }

@@ -219,7 +219,7 @@ function LoanExpress(config) {
             }
         }
         this.nextStep(e);
-        this.loadRelevantLender();
+        //this.loadRelevantLender();
     };
     this.selectLender = function(e) {
         $(e).toggleClass('active');
