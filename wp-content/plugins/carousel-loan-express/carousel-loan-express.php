@@ -52,6 +52,54 @@ class CarouselLoanExpress {
         register_uninstall_hook(__FILE__, array(__CLASS__, 'onUninstall'));
     }
 
+    public function add_metabox() {
+        add_meta_box('lender_id', __('Lender Info'), array($this, 'render_metabox_lender'), 'lender', 'normal', 'high');
+        add_meta_box('application_id', __('Application Info'), array($this, 'render_metabox_application'), 'application', 'normal', 'high');
+        add_meta_box('application_lender_id', __('Lenders'), array($this, 'render_metabox_application_lenders'), 'application', 'side', 'high');
+    }
+
+    public function add_role_caps() {
+        $roles = array('manage_application', 'administrator');
+        $caps = array(
+            'edit_application',
+            'read_application',
+            'delete_application',
+            'create_applications',
+            'edit_applications',
+            //'manage_applications',
+            'publish_applications',
+            'read',
+            'delete_applications',
+            'delete_private_applications',
+            'delete_published_applications',
+                //'edit_applications'
+        );
+        foreach ($roles as $the_role) {
+            $role = get_role($the_role);
+            if ($role) {
+                foreach ($caps as $cap) {
+                    $role->add_cap($cap);
+                }
+            }
+        }
+    }
+
+    public function applications_for_current_author($query) {
+        global $pagenow;
+        if ('edit.php' != $pagenow || !$query->is_admin)
+            return $query;
+        if (!current_user_can('edit_others_posts')) {
+            global $user_ID;
+            $query->set('author', $user_ID);
+        }
+        if (!current_user_can('edit_users')) {
+            global $user_ID;
+            $query->set('author', $user_ID);
+        }
+
+        return $query;
+    }
+
     public function sendSms($args) {
         extract($args);
         if ($phone) {
@@ -96,10 +144,10 @@ class CarouselLoanExpress {
                     loanExpress = new LoanExpress(cleconfig);
                     loanExpress.initialize();
                 }
-                <?php if(isset($_GET['_cletoken'])):?>
+        <?php if (isset($_GET['_cletoken'])): ?>
                     $('html,body').animate({scrollTop: $('.cloanexpress').offset().top - 150}, 'slow');
-                <?php endif?>
-                });
+        <?php endif ?>
+            });
         </script>
         <?php
     }
@@ -132,22 +180,6 @@ class CarouselLoanExpress {
         }
         $_SESSION['_cletoken'] = $_cltoken;
         return $_cltoken;
-    }
-
-    public function applications_for_current_author($query) {
-        global $pagenow;
-        if ('edit.php' != $pagenow || !$query->is_admin)
-            return $query;
-        if (!current_user_can('edit_others_posts')) {
-            global $user_ID;
-            $query->set('author', $user_ID);
-        }
-        if (!current_user_can('edit_users')) {
-            global $user_ID;
-            $query->set('author', $user_ID);
-        }
-
-        return $query;
     }
 
     public function init() {
@@ -190,12 +222,6 @@ class CarouselLoanExpress {
         add_action('add_meta_boxes', array($this, 'add_metabox'));
         add_action('save_post', array($this, 'save_metabox_lender'), 10, 2);
         add_action('save_post', array($this, 'save_metabox_application'), 10, 2);
-    }
-
-    public function add_metabox() {
-        add_meta_box('lender_id', __('Lender Info'), array($this, 'render_metabox_lender'), 'lender', 'normal', 'high');
-        add_meta_box('application_id', __('Application Info'), array($this, 'render_metabox_application'), 'application', 'normal', 'high');
-        add_meta_box('application_lender_id', __('Lenders'), array($this, 'render_metabox_application_lenders'), 'application', 'side', 'high');
     }
 
     public function render_metabox_lender() {
@@ -877,36 +903,10 @@ EOD;
         return $html;
     }
 
-    public function add_role_caps() {
-        $roles = array('manage_application', 'administrator');
-        $caps = array(
-            'edit_application',
-            'read_application',
-            'delete_application',
-            'create_applications',
-            'edit_applications',
-            //'manage_applications',
-            'publish_applications',
-            'read',
-            'delete_applications',
-            'delete_private_applications',
-            'delete_published_applications',
-                //'edit_applications'
-        );
-        foreach ($roles as $the_role) {
-            $role = get_role($the_role);
-            if ($role) {
-                foreach ($caps as $cap) {
-                    $role->add_cap($cap);
-                }
-            }
-        }
-    }
-
     public function cloanexpress_schedule() {
         global $wpdb;
         $table_name = $wpdb->prefix . "clepxress";
-        $sql = 'SELECT * FROM '.$table_name.' WHERE updated_at < (NOW()- INTERVAL 24 HOUR) and status = \'processing\' and notified = 0';
+        $sql = 'SELECT * FROM ' . $table_name . ' WHERE updated_at < (NOW()- INTERVAL 24 HOUR) and status = \'processing\' and notified = 0';
         $results = $wpdb->get_results($sql);
         foreach ($results as $object) {
             $link = get_home_url() . '?_cletoken=' . $object->token;
@@ -921,6 +921,7 @@ EOD;
             do_action('lendclick_notification', $params);
             sleep(1);
         }
+        $wpdb->query($wpdb->prepare('DELETE FROM '.$table_name.' WHERE expired_at < NOW()'));
     }
 
     public function onActivation() {
@@ -935,7 +936,7 @@ EOD;
             'edit_users' => false,
             'level_0' => true,
         ));
-        $table_name = $wpdb->prefix . "clepxress";
+        $table_name = $wpdb->prefix . "clexpress";
         $charset_collate = $wpdb->get_charset_collate();
         $sql = "CREATE TABLE $table_name (
 		`id` int(11) NOT NULL AUTO_INCREMENT,

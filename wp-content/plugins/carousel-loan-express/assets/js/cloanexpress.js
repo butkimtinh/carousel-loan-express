@@ -216,6 +216,7 @@ function LoanExpress(config) {
             var abn_num_valid = $('[name="abn_num"]').data('valid');
             if (abn_num_valid) {
                 this.container.data('loan_abn', $('[name="abn_num"]').val());
+                this.nextStep(e);
             }
             var abn_num =  $('[name="abn_num"]').val();
             if(!abn_num.length){
