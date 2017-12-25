@@ -42,9 +42,10 @@ class CarouselLoanExpress {
         add_action('wp_ajax_nopriv_get_abn_info', array($this, 'get_abn_info'));
 
         add_action('wp_head', array($this, 'cloanexpress_js'));
-        add_action('cloanexpress_event', array($this, 'cron'));
-        add_action('create_application_after', array($this, 'sendEmail'));
-        add_action('create_application_after', array($this, 'sendSms'));
+        add_action('cloanexpress_schedule_event', array($this, 'cloanexpress_schedule'));
+
+        add_action('lendclick_notification', array($this, 'sendEmail'));
+        add_action('lendclick_notification', array($this, 'sendSms'));
 
         register_activation_hook(__FILE__, array($this, 'onActivation'));
         register_deactivation_hook(__FILE__, array($this, 'onDeactivation'));
@@ -53,33 +54,35 @@ class CarouselLoanExpress {
 
     public function sendSms($args) {
         extract($args);
-        $username = 'pabs';
-        $password = 'hola!23';
-        $ref = 'abc123';
-
-        $params = 'username=' . rawurlencode($username) .
-                '&password=' . rawurlencode($password) .
-                '&to=' . rawurlencode($phone) .
-                '&from=' . rawurlencode($source) .
-                '&message=' . rawurlencode($content) .
-                '&ref=' . rawurlencode($ref);
-        $ch = curl_init('https://api.smsbroadcast.com.au/api-adv.php');
-        curl_setopt($ch, CURLOPT_POST, true);
-        curl_setopt($ch, CURLOPT_POSTFIELDS, $content);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        $output = curl_exec($ch);
-        curl_close($ch);
-        return $output;
+        if ($phone) {
+            $username = 'pabs';
+            $password = 'hola!23';
+            $ref = 'abc123';
+            $params = 'username=' . rawurlencode($username) .
+                    '&password=' . rawurlencode($password) .
+                    '&to=' . rawurlencode($phone) .
+                    '&from=' . rawurlencode($source) .
+                    '&message=' . rawurlencode($content) .
+                    '&ref=' . rawurlencode($ref);
+            $ch = curl_init('https://api.smsbroadcast.com.au/api-adv.php');
+            curl_setopt($ch, CURLOPT_POST, true);
+            curl_setopt($ch, CURLOPT_POSTFIELDS, $content);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            $output = curl_exec($ch);
+            curl_close($ch);
+        }
     }
 
     public function sendEmail($args) {
         extract($args);
-        $sitename = get_bloginfo('name');
-        $siteemail = get_bloginfo('admin_email');
-        $headers[] = sprintf('From: %s <%s>', $sitename, $siteemail);
-        $headers[] = 'Content-Type: text/html; charset=UTF-8';
-        $notified = wp_mail($email, $source, $content, $headers);
-        $this->saveStatusCls($token, $status, $notified);
+        if ($email) {
+            $sitename = get_bloginfo('name');
+            $siteemail = get_bloginfo('admin_email');
+            $headers[] = sprintf('From: %s <%s>', $sitename, $siteemail);
+            $headers[] = 'Content-Type: text/html; charset=UTF-8';
+            $notified = wp_mail($email, $source, $content, $headers);
+            $this->updateCleConfig(array('status' => $status, 'notified' => $notified), array('token' => $token));
+        }
     }
 
     public function cloanexpress_js() {
@@ -527,7 +530,13 @@ class CarouselLoanExpress {
         extract($_POST);
         if ($user_email && filter_var($user_email, FILTER_VALIDATE_EMAIL)) {
             if ($cletoken && $cletoken == $_SESSION['_cletoken']) {
-                $this->saveEmailCle($cletoken, $user_email);
+                $phone = preg_replace('/\D/', '', $user_phone);
+                $this->updateCleConfig(array(
+                    'email' => $user_email,
+                    'phone' => $phone,
+                        ), array(
+                    'token' => $cletoken
+                ));
             }
             if (email_exists($user_email)) {
                 $userdata = get_user_by('email', $user_email);
@@ -590,20 +599,15 @@ EOD;
             );
             // Insert the post into the database
             $result = wp_insert_post($my_post);
-
-
             if ($result == 0 || $result instanceof WP_Error) {
                 $data['msg'] = __('Sorry we cant create an application at the moment. Please try again later.');
-                
                 $status = self::APP_STATUS_FAILURE;
-                $content = 'Your application cant is created';
+                $content = __('We cant create your application');
             } else {
                 $data['errno'] = 0;
                 $data['msg'] = __('Thank you, our lenders will contact you shortly');
-                
                 $status = self::APP_STATUS_COMPLETE;
-                $content = 'Your application is created success';
-                
+                $content = __('Your application is created success');
                 update_post_meta($result, 'app_info', $_POST);
                 update_post_meta($result, 'app_lenders', $loan_lenders);
                 $this->requestLenders($loan_lenders, $_POST);
@@ -613,7 +617,7 @@ EOD;
             }
 
             $phone = preg_replace('/\D/', '', $loan_customer_phone);
-            do_action('create_application_after', array(
+            do_action('lendclick_notification', array(
                 'email' => $loan_customer_email,
                 'phone' => $phone,
                 'token' => $cletoken,
@@ -628,7 +632,6 @@ EOD;
     }
 
     public function save_step() {
-
         header('Access-Control-Allow-Origin: *');
         header('Content-Type: application/json');
         $data = array(
@@ -897,17 +900,26 @@ EOD;
         }
     }
 
-    public function cron() {
+    public function cloanexpress_schedule() {
         global $wpdb;
         $table_name = $wpdb->prefix . "clepxress";
         $datetime = date('Y-m-d H:i:s');
+
+        do_action('lendclick_notification', array(
+            'email' => $email,
+            'phone' => $phone,
+            'token' => $cletoken,
+            'content' => $content,
+            'status' => $status,
+            'source' => __('LendClick Notification')
+        ));
     }
 
     public function onActivation() {
         global $wpdb;
 
-        if (!wp_next_scheduled('cloanexpress_event')) {
-            wp_schedule_event(time(), 'hourly', 'cloanexpress_event');
+        if (!wp_next_scheduled('cloanexpress_schedule_event')) {
+            wp_schedule_event(time(), 'hourly', 'cloanexpress_schedule_event');
         }
 
         add_role('manage_application', 'Manage Application', array(
@@ -920,6 +932,7 @@ EOD;
         $sql = "CREATE TABLE $table_name (
 		`id` int(11) NOT NULL AUTO_INCREMENT,
                 `email` varchar(128) NULL,
+                `phone` varchar(64) NULL,
                 `status` varchar(64) NULL,
                 `notified` int(1) NULL,
                 `token` varchar(32) NOT NULL,
@@ -966,13 +979,14 @@ EOD;
         return $r;
     }
 
-    public function saveEmailCle($token, $email) {
+    public function updateCleConfig($data, $where) {
         global $wpdb;
-        $current_time = time();
         $table_name = $wpdb->prefix . "clepxress";
+        $current_time = time();
         $created_at = date('Y-m-d H:i:s', $current_time);
         $expired_at = date('Y-m-d H:i:s', $current_time + 7 * 24 * 60 * 60);
-        $wpdb->update($table_name, array('email' => $email, 'updated_at' => $created_at, 'expired_at' => $expired_at), array('token' => $token));
+        $data_default = array('updated_at' => $created_at, 'expired_at' => $expired_at);
+        $wpdb->update($table_name, array_merge($data_default, $data), $where);
     }
 
     public function saveStatusCls($token, $status, $notified) {

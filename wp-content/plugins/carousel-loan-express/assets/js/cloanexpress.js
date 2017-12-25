@@ -100,18 +100,19 @@ function LoanExpress(config) {
         if (loanOffersFrm.valid() && term_condition_ok) {
             var name = $('input[name="name"]').val();
             var email = $('input[name="email"]').val();
+            var phone = $('input[name="phone"]').val();
             that.showLoader();
             $.ajax({
                 type: 'POST',
                 url: ajaxurl,
-                data: {action: 'create_user', user_name: name, user_email: email, cletoken: cletoken},
+                data: {action: 'create_user', user_name: name, user_email: email, user_phone:phone, cletoken: cletoken},
                 success: function(resp) {
                     that.hideLoader();
                     if (!resp.errno) {
                         that.container.data('loan_author_id', resp.author_id);
                         that.container.data('loan_customer_name', name);
                         that.container.data('loan_customer_email', email);
-                        that.container.data('loan_customer_phone', $('input[name="phone"]').val());
+                        that.container.data('loan_customer_phone', phone);
                         that.container.data('loan_customer_business', $('input[name="business"]').val());
                         that.nextStep(e);
                     } else {
@@ -291,7 +292,7 @@ function LoanExpress(config) {
             success: function(resp) {
                 $('.additional-loader').hide();
                 if (!resp.errno) {
-                    $.removeCookie('cletoken');
+                    $.removeCookie('_cletoken');
                     $.removeCookie(cletoken);
                     that.nextStep(e);
                 } else {
