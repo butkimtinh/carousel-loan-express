@@ -199,6 +199,11 @@ class CarouselLoanExpress {
         add_shortcode('cloanexpress', array($this, 'toHtml'));
         $this->register_post_type();
         $this->register_session();
+        
+        if(isset($_GET['debug_cron']) && $_GET['debug_cron'] ==1){
+            $this->cloanexpress_schedule();
+            die;
+        }
         //$this->register_taxonomy();
     }
 
@@ -905,23 +910,58 @@ EOD;
 
     public function cloanexpress_schedule() {
         global $wpdb;
-        $table_name = $wpdb->prefix . "clepxress";
-        $sql = 'SELECT * FROM ' . $table_name . ' WHERE updated_at < (NOW()- INTERVAL 24 HOUR) and status = \'processing\' and notified = 0';
+        $clepxress_tbl = $wpdb->prefix . "clepxress";
+        $sql = 'SELECT * FROM ' . $clepxress_tbl . ' WHERE updated_at < (NOW()- INTERVAL 24 HOUR) and status = \'processing\' and notified = 0';
         $results = $wpdb->get_results($sql);
-        foreach ($results as $object) {
-            $link = get_home_url() . '?_cletoken=' . $object->token;
-            $params = array(
-                'email' => $object->email,
-                'phone' => $object->phone,
-                'token' => $object->token,
-                'content' => sprintf('Please complete this form: <a href="%s" target="_blank">%s</a>', $link, $link),
-                'status' => 'failure',
-                'source' => __('LendClick Notification')
-            );
-            do_action('lendclick_notification', $params);
-            sleep(1);
+        if (count($results)) {
+            foreach ($results as $object) {
+                if (!$object->email || !$object->phone) {
+                    continue;
+                }
+                $email = $object->email;
+                $token = $object->token;                
+                $data = json_decode(json_decode(stripslashes($object->data),true),true);
+                $post_meta = $data && isset($data['data'])? $data['data']: array();
+                
+                $link = $this->getLinkApplicationNotComplete($email, $token, $post_meta);
+                if(!$link){
+                    continue;
+                }
+                $phone = $object->phone;
+                $params = array(
+                    'email' => $email,
+                    'phone' => $phone,
+                    'token' => $token,
+                    'content' => sprintf('Please complete this form: <a href="%s" target="_blank">%s</a>', $link, $link),
+                    'status' => 'failure',
+                    'source' => __('LendClick Notification')
+                );
+                do_action('lendclick_notification', $params);
+            }
         }
-        $wpdb->query($wpdb->prepare('DELETE FROM '.$table_name.' WHERE expired_at < NOW()'));
+        $wpdb->query('DELETE FROM ' . $clepxress_tbl . ' WHERE expired_at < NOW()');
+    }
+
+    protected function getLinkApplicationNotComplete($email, $token, $post_meta = array()) {
+        global $wpdb;
+        $users_tbl = $wpdb->prefix . "users";
+        $result = $wpdb->get_row("SELECT ID FROM $users_tbl WHERE user_email = '$email'");
+        if (!$result) {
+            return get_home_url().'?_cletoken='.$token;
+        }
+        $my_post = array(
+            'post_title' => __('Form Not Complete <'.$email.'>'),
+            'post_content' => '',
+            'post_status' => 'pending',
+            'post_type' => 'application',
+            'post_author' => $result->ID,
+        );
+        $result = wp_insert_post($my_post);
+        if (!is_wp_error($result)) {
+            update_post_meta($result, 'app_info', $post_meta);
+            return get_edit_post_link($result);
+        } 
+        return false;
     }
 
     public function onActivation() {
@@ -936,7 +976,7 @@ EOD;
             'edit_users' => false,
             'level_0' => true,
         ));
-        $table_name = $wpdb->prefix . "clexpress";
+        $table_name = $wpdb->prefix . "clepxress";
         $charset_collate = $wpdb->get_charset_collate();
         $sql = "CREATE TABLE $table_name (
 		`id` int(11) NOT NULL AUTO_INCREMENT,
