@@ -56,7 +56,7 @@ class CarouselLoanExpress {
 
     public function cloanexpress_time_schedule($schedules) {
         $schedules['cloanexpress_time_schedule'] = array(
-            'interval' => 10,
+            'interval' => 21600,
             'display' => __('Cloanexpress Time Schedule')
         );
         return $schedules;
@@ -916,7 +916,7 @@ EOD;
     public function cloanexpress_schedule() {
         global $wpdb;
         $clepxress_tbl = $wpdb->prefix . "clepxress";
-        $sql = 'SELECT * FROM ' . $clepxress_tbl . ' WHERE updated_at < (NOW()- INTERVAL 10 SECOND) and status = \'processing\' and notified = 0';
+        $sql = 'SELECT * FROM ' . $clepxress_tbl . ' WHERE updated_at < (NOW()- INTERVAL 6 HOUR) and status = \'processing\' and notified = 0';
         $results = $wpdb->get_results($sql);
         if (count($results)) {
             foreach ($results as $object) {
@@ -948,7 +948,7 @@ EOD;
     }
 
     protected function getLinkApplicationNotComplete($email, $token, $post_meta = array()) {
-        require_once __DIR__.'/../../../wp-includes/link-template.php';
+        require_once __DIR__ . '/../../../wp-includes/link-template.php';
         global $wpdb;
         $users_tbl = $wpdb->prefix . "users";
         $result = $wpdb->get_row("SELECT ID FROM $users_tbl WHERE user_email = '$email'");
@@ -966,7 +966,7 @@ EOD;
         $result = wp_insert_post($my_post);
         if (!is_wp_error($result)) {
             add_post_meta($result, 'app_info', $post_meta);
-            return $home_url.'/wp-admin/post.php?post='.$result.'&action=edit';
+            return $home_url . '/wp-admin/post.php?post=' . $result . '&action=edit';
         }
         return false;
     }
