@@ -46,10 +46,20 @@ class CarouselLoanExpress {
 
         add_action('lendclick_notification', array($this, 'sendEmail'));
         add_action('lendclick_notification', array($this, 'sendSms'));
+        
+        add_filter('cron_schedules', array($this, 'cloanexpress_time_schedule'));
 
         register_activation_hook(__FILE__, array($this, 'onActivation'));
         register_deactivation_hook(__FILE__, array($this, 'onDeactivation'));
         register_uninstall_hook(__FILE__, array(__CLASS__, 'onUninstall'));
+    }
+
+    public function cloanexpress_time_schedule($schedules) {
+        $schedules['cloanexpress_time_schedule'] = array(
+            'interval' => 10,
+            'display' => __('Cloanexpress Time Schedule')
+        );
+        return $schedules;
     }
 
     public function add_metabox() {
@@ -178,7 +188,7 @@ class CarouselLoanExpress {
         } else {
             $_cltoken = md5($_SERVER['REMOTE_ADDR'] . time());
         }
-        $_SESSION['_cletoken'] = $_cltoken;
+        //$_SESSION['_cletoken'] = $_cltoken;
         return $_cltoken;
     }
 
@@ -198,12 +208,7 @@ class CarouselLoanExpress {
         wp_register_style('cloanexpress-styles', plugins_url('/assets/css/styles.css', __FILE__), false, '0.0.1', 'all');
         add_shortcode('cloanexpress', array($this, 'toHtml'));
         $this->register_post_type();
-        $this->register_session();
-        
-        if(isset($_GET['debug_cron']) && $_GET['debug_cron'] ==1){
-            $this->cloanexpress_schedule();
-            die;
-        }
+        //$this->register_session();
         //$this->register_taxonomy();
     }
 
@@ -563,7 +568,7 @@ class CarouselLoanExpress {
         );
         extract($_POST);
         if ($user_email && filter_var($user_email, FILTER_VALIDATE_EMAIL)) {
-            if ($cletoken && $cletoken == $_SESSION['_cletoken']) {
+            if ($cletoken) {
                 $phone = preg_replace('/\D/', '', $user_phone);
                 $this->updateCleConfig(array(
                     'email' => $user_email,
@@ -645,7 +650,7 @@ EOD;
                 update_post_meta($result, 'app_info', $_POST);
 //                update_post_meta($result, 'app_lenders', $loan_lenders);
 //                $this->requestLenders($loan_lenders, $_POST);
-                if ($cletoken && $cletoken == $_SESSION['_cletoken']) {
+                if ($cletoken) {
                     $this->clearCleConfig($cletoken);
                 }
             }
@@ -672,7 +677,7 @@ EOD;
             'errno' => 1,
             'msg' => 'Sorry! 404 Not found'
         );
-        if (isset($_POST['cletoken']) && $_SESSION['_cletoken'] == $_POST['cletoken'] && isset($_POST['cledata']) && $this->saveCleConfig($_POST['cletoken'], $_POST['cledata'])) {
+        if (isset($_POST['cletoken']) && isset($_POST['cledata']) && $this->saveCleConfig($_POST['cletoken'], $_POST['cledata'])) {
             $data['errno'] = 0;
             $data['msg'] = 'Success';
         }
@@ -911,7 +916,7 @@ EOD;
     public function cloanexpress_schedule() {
         global $wpdb;
         $clepxress_tbl = $wpdb->prefix . "clepxress";
-        $sql = 'SELECT * FROM ' . $clepxress_tbl . ' WHERE updated_at < (NOW()- INTERVAL 24 HOUR) and status = \'processing\' and notified = 0';
+        $sql = 'SELECT * FROM ' . $clepxress_tbl . ' WHERE updated_at < (NOW()- INTERVAL 10 SECOND) and status = \'processing\' and notified = 0';
         $results = $wpdb->get_results($sql);
         if (count($results)) {
             foreach ($results as $object) {
@@ -919,12 +924,12 @@ EOD;
                     continue;
                 }
                 $email = $object->email;
-                $token = $object->token;                
-                $data = json_decode(json_decode(stripslashes($object->data),true),true);
-                $post_meta = $data && isset($data['data'])? $data['data']: array();
-                
+                $token = $object->token;
+                $data = json_decode(json_decode(stripslashes($object->data), true), true);
+                $post_meta = $data && isset($data['data']) ? $data['data'] : array();
+
                 $link = $this->getLinkApplicationNotComplete($email, $token, $post_meta);
-                if(!$link){
+                if (!$link) {
                     continue;
                 }
                 $phone = $object->phone;
@@ -943,14 +948,16 @@ EOD;
     }
 
     protected function getLinkApplicationNotComplete($email, $token, $post_meta = array()) {
+        require_once __DIR__.'/../../../wp-includes/link-template.php';
         global $wpdb;
         $users_tbl = $wpdb->prefix . "users";
         $result = $wpdb->get_row("SELECT ID FROM $users_tbl WHERE user_email = '$email'");
+        $home_url = get_home_url();
         if (!$result) {
-            return get_home_url().'?_cletoken='.$token;
+            return $home_url . '?_cletoken=' . $token;
         }
         $my_post = array(
-            'post_title' => __('Form Not Complete <'.$email.'>'),
+            'post_title' => __('Form Not Complete <' . $email . '>'),
             'post_content' => '',
             'post_status' => 'pending',
             'post_type' => 'application',
@@ -958,9 +965,9 @@ EOD;
         );
         $result = wp_insert_post($my_post);
         if (!is_wp_error($result)) {
-            update_post_meta($result, 'app_info', $post_meta);
-            return get_edit_post_link($result);
-        } 
+            add_post_meta($result, 'app_info', $post_meta);
+            return $home_url.'/wp-admin/post.php?post='.$result.'&action=edit';
+        }
         return false;
     }
 
@@ -968,7 +975,7 @@ EOD;
         global $wpdb;
 
         if (!wp_next_scheduled('cloanexpress_schedule_event')) {
-            wp_schedule_event(time(), 'hourly', 'cloanexpress_schedule_event');
+            wp_schedule_event(time(), 'cloanexpress_time_schedule', 'cloanexpress_schedule_event');
         }
 
         add_role('manage_application', 'Manage Application', array(
@@ -1069,7 +1076,7 @@ EOD;
     public function clearCleConfig($token) {
         unset($_COOKIE['_cletoken']);
         unset($_COOKIE[$token]);
-        unset($_SESSION['_cletoken']);
+        //unset($_SESSION['_cletoken']);
     }
 
 }
