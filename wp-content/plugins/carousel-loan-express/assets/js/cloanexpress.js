@@ -300,14 +300,14 @@ function LoanExpress(config) {
                 if (!resp.errno) {
                     $.removeCookie('_cletoken');
                     $.removeCookie(cletoken);
-                    that.nextStep(e);
+                    that.nextStep(e, false);
                 } else {
                     alert(resp.msg);
                 }
             }
         });
     };
-    this.nextStep = function(e) {
+    this.nextStep = function(e, sync = true) {
         var currentStep = $(e).closest('.step');
         var nextStep = currentStep.next('.step');
         var that = this;
@@ -325,7 +325,9 @@ function LoanExpress(config) {
                     } else {
                         $('.loan-indicators').css({display: 'none'});
                     }
-                    that.saveStep(nextStep.attr('id'));
+                    if(sync){
+                        that.saveStep(nextStep.attr('id'));
+                    }
                 }
             });
             $.cookie('current_step', stepId);
