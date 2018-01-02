@@ -25,6 +25,7 @@ class CarouselLoanExpress {
             add_action('load-post-new.php', array($this, 'init_metabox'));
             add_action('admin_init', array($this, 'add_role_caps'), 999);
             add_filter('pre_get_posts', array($this, 'applications_for_current_author'));
+            add_action('admin_enqueue_scripts', array($this,'enqueue_admin'));
         }
         add_action("wp_ajax_search_lender", array($this, 'search_lender'));
         add_action("wp_ajax_nopriv_search_lender", array($this, 'search_lender'));
@@ -46,7 +47,7 @@ class CarouselLoanExpress {
 
         add_action('lendclick_notification', array($this, 'sendEmail'));
         add_action('lendclick_notification', array($this, 'sendSms'));
-        
+
         add_filter('cron_schedules', array($this, 'cloanexpress_time_schedule'));
 
         register_activation_hook(__FILE__, array($this, 'onActivation'));
@@ -133,12 +134,12 @@ class CarouselLoanExpress {
         extract($args);
         if ($email) {
             global $borrow_option;
-            if($borrow_option['logo']['url'] != ''){
+            if ($borrow_option['logo']['url'] != '') {
                 $logo_url = esc_url($borrow_option['logo']['url']);
-            }else{
-                $logo_url = get_template_directory_uri().'/images/logo.png';
+            } else {
+                $logo_url = get_template_directory_uri() . '/images/logo.png';
             }
-            $content = '<p><a href="https://www.lendclick.com.au/" target="_blank"><img width="200px" src="https://www.lendclick.com.au/wp-content/uploads/2017/06/Logo32.png"/></a></p>'. $content;
+            $content = '<p><a href="https://www.lendclick.com.au/" target="_blank"><img width="200px" src="https://www.lendclick.com.au/wp-content/uploads/2017/06/Logo32.png"/></a></p>' . $content;
             $sitename = __('LendClick - Fast Small Business Loans');
             $siteemail = get_bloginfo('admin_email');
             $headers[] = sprintf('From: %s <%s>', $sitename, $siteemail);
@@ -213,8 +214,6 @@ class CarouselLoanExpress {
         wp_register_style('cloanexpress-styles', plugins_url('/assets/css/styles.css', __FILE__), false, '0.0.1', 'all');
         add_shortcode('cloanexpress', array($this, 'toHtml'));
         $this->register_post_type();
-        //$this->register_session();
-        //$this->register_taxonomy();
     }
 
     public function enqueue_style() {
@@ -231,6 +230,18 @@ class CarouselLoanExpress {
         wp_enqueue_style('noUiSlider');
         wp_enqueue_style('icheck-all');
         wp_enqueue_style('cloanexpress-styles');
+    }
+
+    public function enqueue_admin($hook) {
+        if ('post.php' !== $hook) {
+            return;
+        }
+        wp_enqueue_style('noUiSlider');
+        
+        wp_enqueue_script('noUiSlider');
+        wp_enqueue_script('cloanexpress-js');
+        wp_enqueue_script('jquery.validate');
+        wp_enqueue_script('jquery.mask');
     }
 
     public function init_metabox() {
@@ -665,7 +676,7 @@ EOD;
                 'token' => $cletoken,
                 'content' => $content,
                 'status' => $status,
-                'source' => __('LendClick application Successful - Application #'.$result)
+                'source' => __('LendClick application Successful - Application #' . $result)
             ));
         }
         header('Content-Type: application/json');

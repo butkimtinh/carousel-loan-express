@@ -46,9 +46,9 @@ $lender_webhook = get_post_meta($post->ID, 'lender_webhook', true);
         <?php
         $termCollection = array('Any', '3-6', '6-12', '12-24', '24+');
         ?>
-        <td><select name="lender_term">
+        <td><select name="lender_term[]" multiple="" class="form-control full-width">
                 <?php foreach ($termCollection as $termName): ?>
-                    <?php if ($termName == $lender_term): ?>
+                    <?php if (in_array($termName, $lender_term)): ?>
                         <option value="<?php echo $termName ?>" selected=""><?php echo $termName ?></option>
                     <?php else: ?>
                         <option value="<?php echo $termName ?>"><?php echo $termName ?></option>

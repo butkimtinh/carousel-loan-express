@@ -27,6 +27,44 @@ if (is_array($app_info)) {
     #render_metabox_application td .full-width{
         width: 100%;
     }
+    .noUi-base{
+        background-color: #d6d6d6;
+    }
+    .noUi-horizontal .noUi-handle{
+        background: #23a755;
+        width: 29px;
+        height: 29px;
+        cursor: pointer;
+        border-radius: 50%;
+        border:none !important;
+        box-shadow: none !important;
+        top: -10px;
+    }
+    .noUi-handle:after, .noUi-handle:before{
+        display: none;
+    }
+    .noUi-horizontal{
+        height: 10px;
+    }
+    .noUi-connect{
+        background-color: #238247;
+    }
+    .loan-slider-wapper{
+        position: relative;
+        height: 32px;
+        color:#a5a5a5;
+        font-size: 12px;
+    }
+    .loan-slider-wapper .limit{
+        position: absolute;
+        bottom: 0;
+    }
+    .loan-slider-wapper .loan-max{
+        right: 0;
+    }
+    .loan-slider-wapper .loan-min{
+        left: 0;
+    }
 </style>
 <table id="render_metabox_application"> 
     <tr>
@@ -35,7 +73,7 @@ if (is_array($app_info)) {
     </tr>
     <tr>
         <td><?php _e('Birthday:') ?></td>
-        <td><input type="text" class="form-control full-width" id="loan_dob" name="app[loan_dob]" value="<?php echo isset($loan_dob) ? $loan_dob : '' ?>"/></td>
+        <td><input type="text" placeholder="__/__/____" maxlength="10" class="form-control full-width" id="loan_dob" name="app[loan_dob]" value="<?php echo isset($loan_dob) ? $loan_dob : '' ?>"/></td>
     </tr>
     <tr>
         <td><?php _e('Email address:') ?></td>
@@ -56,8 +94,8 @@ if (is_array($app_info)) {
     <tr>
         <td><?php _e('Industry') ?></td>
         <td>
-            <?php 
-            echo $this->getIndustrySelect('loan_industry', 'app[loan_industry]',  isset($loan_industry) ? $loan_industry : '',array(
+            <?php
+            echo $this->getIndustrySelect('loan_industry', 'app[loan_industry]', isset($loan_industry) ? $loan_industry : '', array(
                 'class' => 'form-control full-width'
             ));
             ?>
@@ -68,7 +106,13 @@ if (is_array($app_info)) {
     </tr>
     <tr>
         <td><?php _e('Loan Amount(USD)') ?></td>
-        <td><input type="text" class="form-control full-width" id="loan_amount" name="app[loan_amount]" value="<?php echo isset($loan_amount) ? (is_numeric($loan_amount)?sprintf('$%s', number_format($loan_amount)):$loan_amount) : '' ?>"/></td>
+        <td>
+            <div class="loan-slider-wapper">
+                <div id="loan-slider"></div>
+                <span class="loan-min limit">$5,000</span>
+                <span class="loan-max limit">$1,000,000</span>
+            </div>
+            <input type="text" class="form-control full-width"  id="loan_amount" name="app[loan_amount]" value="<?php echo isset($loan_amount) ? (is_numeric($loan_amount) ? sprintf('$%s', number_format($loan_amount)) : $loan_amount) : '' ?>"/></td>
     </tr>
     <tr>
         <td><?php _e('Loan Term (Months):') ?></td>
@@ -108,11 +152,46 @@ if (is_array($app_info)) {
     </tr>
     <tr>
         <td><?php _e('Time of business operating?') ?></td>
-        <td><input type="text" class="form-control full-width" id="time_of_business_operating" name="app[time_of_business_operating]" value="<?php echo isset($time_of_business_operating) ? $time_of_business_operating : '' ?>"/></td>
+        <td>
+            <?php
+            $selected = isset($time_of_business_operating) ? $time_of_business_operating : '';
+            $collection = array('Less than 3 months', '3-5 months', '6-12 months', '1-2 years', '3-5 years', 'More than 5 years');
+            ?>
+            <select id="time_of_business_operating" name="app[time_of_business_operating]" class="form-control full-width">
+                <?php
+                foreach ($collection as $k => $timeName):
+                    ?>
+                    <?php if ($selected == $timeName): ?>
+                        <option value="<?php echo $timeName ?>" selected=""><?php echo $timeName ?></option>
+                    <?php else: ?>
+                        <option value="<?php echo $timeName ?>"><?php echo $timeName ?></option>
+                    <?php endif; ?>
+                    <?php
+                endforeach;
+                ?>
+            </select>
+        </td>
     </tr>
     <tr>
         <td><?php _e('Monthly revenue? (average over past 6 months)') ?></td>
-        <td><input type="text" class="form-control full-width" id="loan_average_revenue" name="app[loan_average_revenue]" value="<?php echo isset($loan_average_revenue) ? $loan_average_revenue : '' ?>"/></td>
+        <td>
+            <?php
+            $selected = isset($loan_average_revenue) ? $loan_average_revenue : '';
+            $collection = array('$0 - $10k', '$10k - $25k', '$100k - $250k', '$250k - $500k', '$500k+');
+            ?>
+            <select id="loan_average_revenue" name="app[loan_average_revenue]" class="form-control full-width">
+                <?php
+                foreach ($collection as $k => $revenueName):
+                    ?>
+                    <?php if ($selected == $revenueName): ?>
+                        <option value="<?php echo $revenueName ?>" selected=""><?php echo $revenueName ?></option>
+                    <?php else: ?>
+                        <option value="<?php echo $revenueName ?>"><?php echo $revenueName ?></option>
+                    <?php endif; ?>
+                    <?php
+                endforeach;
+                ?>
+            </select>
     </tr>
     <tr>
         <td><?php _e('Additional contact number:') ?></td>
@@ -123,3 +202,22 @@ if (is_array($app_info)) {
         <td><input type="text" class="form-control full-width" id="best_time_to_reach" name="app[best_time_to_reach]" value="<?php echo isset($best_time_to_reach) ? $best_time_to_reach : '' ?>"/></td>
     </tr>
 </table>
+<script type="text/javascript">
+    jQuery(document).ready(function($) {
+        var loanSlider = new LoanExpresSlider({'max': 1000000, 'min': 5000, 'step': 5000, 'start': <?php echo preg_replace('/\D/', '', $loan_amount);?>});
+        loanSlider.updatePrice = function(){
+            this.slided = true;
+            var val = this.loanSlider.noUiSlider.get();
+            $('#loan_amount').val(this.formatCurrency(val));
+        };
+        loanSlider.initialize();
+        
+        $('[type="tel"]').mask('(00) 0000 0000');
+        $('#loan_dob').mask("dA/mA/yAAA", {placeholder: "__/__/____", translation: {
+                d: {pattern: /[0123]/},
+                m: {pattern: /[01]/},
+                y: {pattern: /[12]/},
+                A: {pattern: /[0-9]/}
+            }});
+    });
+</script>
