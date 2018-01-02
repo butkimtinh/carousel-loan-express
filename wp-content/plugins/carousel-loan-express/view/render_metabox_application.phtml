@@ -203,8 +203,9 @@ if (is_array($app_info)) {
     </tr>
 </table>
 <script type="text/javascript">
+    var loanSlider;
     jQuery(document).ready(function($) {
-        var loanSlider = new LoanExpresSlider({'max': 1000000, 'min': 5000, 'step': 5000, 'start': <?php echo preg_replace('/\D/', '', $loan_amount);?>});
+        loanSlider = new LoanExpresSlider({'max': 1000000, 'min': 5000, 'step': 5000, 'start': <?php echo preg_replace('/\D/', '', $loan_amount);?>});
         loanSlider.updatePrice = function(){
             this.slided = true;
             var val = this.loanSlider.noUiSlider.get();
@@ -212,12 +213,23 @@ if (is_array($app_info)) {
         };
         loanSlider.initialize();
         
+        $('#loan_amount').change(function(){
+            var amount = $(this).val();
+            var number = amount.replace(/[^0-9\.]+/g,"");
+            if($.isNumeric(number)){
+                if(number < 5000 && number > 1000000){
+                    alert('Please enter loan amount in range from $5,000 to $1,0000,000');
+                }else{
+                    loanSlider.val(number);
+                }
+                $(this).val(loanSlider.formatCurrency(number));
+            }else{
+                alert('Please enter a number');
+            }
+            
+        });
+        
         $('[type="tel"]').mask('(00) 0000 0000');
-        $('#loan_dob').mask("dA/mA/yAAA", {placeholder: "__/__/____", translation: {
-                d: {pattern: /[0123]/},
-                m: {pattern: /[01]/},
-                y: {pattern: /[12]/},
-                A: {pattern: /[0-9]/}
-            }});
+        $('#loan_dob').mask("00/00/0000", {placeholder: "__/__/____"});
     });
 </script>
