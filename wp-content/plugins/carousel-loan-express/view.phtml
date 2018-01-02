@@ -93,20 +93,30 @@
                     <div class="loan-form-field">
                         <label><?php _e('Full name') ?></label><br>
                         <span class="wpcf7-form-control-wrap">
-                            <input type="text" name="name" minlength="2" size="40" class="wpcf7-form-control wpcf7-text  loan-field" placeholder="Full name" required=""/>
+                            <input type="text" name="name" minlength="2" size="40" onkeyup="loanExpress.fieldOnChange(this)" class="wpcf7-form-control wpcf7-text  loan-field" placeholder="Full name" required=""/>
+                            <i class="fa fa-check" aria-hidden="true"></i>
                         </span>
                     </div>
                     <div class="loan-form-field">
                         <label><?php _e('Email Address') ?></label><br>
-                        <span class="wpcf7-form-control-wrap"><input type="text" name="email" value="" size="40" class="wpcf7-form-control wpcf7-text  loan-field" placeholder="Email Address" required=""/></span>
+                        <span class="wpcf7-form-control-wrap">
+                            <input type="text" name="email" value="" size="40" onkeyup="loanExpress.fieldOnChange(this)" class="wpcf7-form-control wpcf7-text  loan-field" placeholder="Email Address" required=""/>
+                            <i class="fa fa-check" aria-hidden="true"></i>
+                        </span>
                     </div>
                     <div class="loan-form-field">
                         <label><?php _e('Phone') ?></label><br>
-                        <span class="wpcf7-form-control-wrap"><input type="tel" name="phone" value="" size="40" class="wpcf7-form-control wpcf7-text loan-field" placeholder="Phone" required=""/></span>
+                        <span class="wpcf7-form-control-wrap">
+                            <input type="tel" name="phone" value="" size="40" onkeyup="loanExpress.fieldOnChange(this)" class="wpcf7-form-control wpcf7-text loan-field" placeholder="Phone" required=""/>
+                            <i class="fa fa-check" aria-hidden="true"></i>
+                        </span>
                     </div>
                     <div class="loan-form-field">
                         <label><?php _e('Business Name') ?></label><br>
-                        <span class="wpcf7-form-control-wrap"><input type="text" name="business" value="" size="40" class="wpcf7-form-control wpcf7-text loan-field" placeholder="Business Name" required=""/></span>
+                        <span class="wpcf7-form-control-wrap">
+                            <input type="text" name="business" value="" size="40" onkeyup="loanExpress.fieldOnChange(this)" class="wpcf7-form-control wpcf7-text loan-field" placeholder="Business Name" required=""/>
+                            <i class="fa fa-check" aria-hidden="true"></i>
+                        </span>
                     </div>
                     <div class="loan-form-field-checkbox">
                         <span class="wpcf7-form-control-wrap">
@@ -316,7 +326,7 @@
             </div>
         </div>
         <div id="step7" class="step" data-valid="false" data-indicator="false">
-            <h2><?php _e('Select Term (Month)') ?></h2>
+            <h2><?php _e('Select Term (months)') ?></h2>
             <div class="loan-terms">
                 <div class="row">
                     <div class="text-center answers-section" style=" margin-top: 28px; ">
@@ -405,9 +415,15 @@
                 </div>
                 <div class="text-center answers-section answers-small-margin">
                     <div class="row">
+                        <br/>
                         <div class="col-md-8 col-md-offset-2">
                             <div class="form-group input abn-field-container">
-                                <input maxlength="11" class="form-control step-input" id="abn_num" name="abn_num" type="text" placeholder="Enter your ABN" data-valid="false" onchange="loanExpress.verifyAbn(this)">
+                                <div class="loan-form-field">
+                                    <span class="wpcf7-form-control-wrap">
+                                        <input maxlength="11" class="form-control step-input" id="abn_num" name="abn_num" type="text" placeholder="Enter your ABN" data-valid="false" onchange="loanExpress.verifyAbn(this)">
+                                        <i class="fa fa-check" aria-hidden="true"></i>
+                                    </span>
+                                </div>
                                 <div>
                                     <span id="abn_num_error_text" class="error_input_text"><?php _e('Enter a valid ABN number') ?><br>or <a onclick="loanExpress.stepAbn(this, true)" id="skip-abn" data-slide="next" href="javascript:void()" style="text-decoration:underline;color:#000;" skip="">Skip</a></span>
                                 </div>
@@ -415,13 +431,17 @@
                             </div>
                         </div>
                         <div class="abn-info col-md-8 col-md-offset-2">
-                            <div class="col-md-6">
-                                <span class="abn-title"><?php _e('Business Legal Name') ?></span>
+                            <div class="col-md-4 abn-name">
+                                <span class="abn-title"><i class="fa fa-check" aria-hidden="true"></i> <?php _e('Business Legal Name') ?></span>
                                 <span class="abn-details abn-legal-name"></span>
                             </div>
-                            <div class="col-md-6">
-                                <span class="abn-title"><?php _e('Registration Date') ?></span>
+                            <div class="col-md-4 abn-date">
+                                <span class="abn-title"><i class="fa fa-check" aria-hidden="true"></i> <?php _e('Registration Date') ?></span>
                                 <span class="abn-details abn-reg-date">1999-11-01</span>
+                            </div>
+                            <div class="col-md-4 abn-state">
+                                <span class="abn-title"><i class="fa fa-check" aria-hidden="true"></i> <?php _e('State') ?></span>
+                                <span class="abn-details abn-state-name">Anywhere</span>
                             </div>
                             <br>
                         </div>
@@ -446,26 +466,6 @@
                     <button type="button" class="modal-ok btn btn-sm btn-success" onclick="loanExpress.stepAgree(this)">Agree</button>
                 </div>       
             </div>
-            <!--             Modal 
-                        <div class="modal fade in" role="dialog" style="position: absolute; background-color: rgba(0,0,0,0.7)">
-                            <div class="modal-dialog">
-                                 Modal content
-                                <div class="modal-content">
-                                    <div class="modal-header">
-                                        <button type="button" class="close" data-dismiss="modal">&times;</button>
-                                        <h4 class="modal-title">Disclaimer</h4>
-                                    </div>
-                                    <div class="modal-body">
-                                        <p>Lend Click provides you with easy online application services. Lend Click is not a loan provider or other funding provider and does not provide actual loans or any kind of advice. By providing the application information and selecting third party lender/s, you authorize us to share your application information with those third party lenders. When applying for a loan from a third party lender, you should disclose all relevant financial information, including whether you have any outstanding loans or have applied to receive any loans from another third party lender. Approval of an actual loan from the third party lender is subject to a separate assessment process by the third party lender and the loan is subject to the third party lender's terms and conditions.</p>
-                                    </div>
-                                    <div class="modal-footer" style="text-align: center">
-                                        <div id="disclaimer-check-div"><input style="float:left;margin-right:5px;" type="checkbox" id="disclaimer-check" name="disclaimer-check"> I understand and agree</div>
-                                        <br/>
-                                        <button type="button" class="modal-ok btn btn-sm btn-success" onclick="loanExpress.stepAgree(this)">Agree</button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>-->
         </div>
         <div id="step12" class="step" data-valid="false" data-indicator="false">
             <h2 class="modal-title"><?php _e('Wait, one last thing before your chosen lenders call you!') ?></h2>
@@ -473,16 +473,28 @@
                 <div class="additional-loader">
                     <p><i class="glyphicon glyphicon-refresh abn-loader-processing"></i> <?php _e('Submitting application to lenders....') ?></p>
                 </div>
-                <div class="form-group">
-                    <label class="control-label"><?php _e('Additional contact number') ?></label>
-                    <input type="tel" class="form-control business_field" name="business_phone_number" maxlength="15">
-                    <label class="control-label"><?php _e('Best time to call') ?></label>
-                    <input type="text" class="form-control business_field" name="best_time_to_reach" maxlength="250">
-                    <br/>
-                    <div class="bottom-panel text-center col-lg-12">
-                        <button type="button" id="additional-fields-save" class="btn-sm  btn-success " onclick="loanExpress.stepFinish(this)">Finish</button>
+                <form id="loan-additional-frm" onsubmit="return false;">
+                    <div class="loan-form-field">
+                        <label><?php _e('Additional contact number') ?></label><br>
+                        <span class="wpcf7-form-control-wrap">
+                            <input type="tel" class="form-control business_field" name="business_phone_number" maxlength="15" onkeyup="loanExpress.fieldOnChange(this)">
+                            <i class="fa fa-check" aria-hidden="true"></i>
+                        </span>
                     </div>
-                </div>
+                    <div class="loan-form-field">
+                        <label><?php _e('Best time to call') ?></label><br>
+                        <span class="wpcf7-form-control-wrap">
+                            <input type="text" class="form-control business_field" name="best_time_to_reach" maxlength="250" onkeyup="loanExpress.fieldOnChange(this)">
+                            <i class="fa fa-check" aria-hidden="true"></i>
+                        </span>
+                    </div> 
+                    <div class="form-group">
+                        <br/>
+                        <div class="bottom-panel text-center col-lg-12">
+                            <button type="button" id="additional-fields-save" class="btn-sm  btn-success " onclick="loanExpress.stepFinish(this)">Finish</button>
+                        </div>
+                    </div>
+                </form>
             </div>
 
         </div>

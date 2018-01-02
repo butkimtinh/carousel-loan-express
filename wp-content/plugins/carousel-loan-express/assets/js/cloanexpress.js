@@ -72,7 +72,7 @@ function LoanExpress(config) {
             this.step(document.getElementById(this.config.step));
         }
     };
-    
+
     this.stepLoanSlider = function(e) {
         if (this.loanSlider.isValid()) {
             this.container.data('loan_amount', this.loanSlider.val());
@@ -93,19 +93,30 @@ function LoanExpress(config) {
         this.container.data('loan_average_revenue', $(e).data('val'));
         this.nextStep(e);
     };
+    this.fieldOnChange = function(e) {
+        if ($(e).valid() == true) {
+            $(e).closest('.wpcf7-form-control-wrap').find('.fa').css({display:'block'});
+        } else {
+            $(e).closest('.wpcf7-form-control-wrap').find('.fa').css({display:'none'});;
+        }
+    };
     this.stepLoanOffers = function(e) {
         var loanOffersFrm = $("#loan-offers-frm");
         var that = this;
         var term_condition_ok = $('[name="term_condition"]').is(":checked");
+        var nameEle = $('.loan-offers input[name="name');
+        var emailEle = $('.loan-offers input[name="email');
+        var phoneEle = $('.loan-offers input[name="phone');
+        var businessEle = $('.loan-offers input[name="business');
         if (loanOffersFrm.valid() && term_condition_ok) {
-            var name = $('input[name="name"]').val();
-            var email = $('input[name="email"]').val();
-            var phone = $('input[name="phone"]').val();
+            var name = nameEle.val();
+            var email = emailEle.val();
+            var phone = phoneEle.val();
             that.showLoader();
             $.ajax({
                 type: 'POST',
                 url: ajaxurl,
-                data: {action: 'create_user', user_name: name, user_email: email, user_phone:phone, cletoken: cletoken},
+                data: {action: 'create_user', user_name: name, user_email: email, user_phone: phone, cletoken: cletoken},
                 success: function(resp) {
                     that.hideLoader();
                     if (!resp.errno) {
@@ -113,7 +124,7 @@ function LoanExpress(config) {
                         that.container.data('loan_customer_name', name);
                         that.container.data('loan_customer_email', email);
                         that.container.data('loan_customer_phone', phone);
-                        that.container.data('loan_customer_business', $('input[name="business"]').val());
+                        that.container.data('loan_customer_business', businessEle.val());
                         that.nextStep(e);
                     } else {
                         alert('Sorry we cant process your data.');
@@ -200,9 +211,12 @@ function LoanExpress(config) {
                         $('.abn-search-link, #abn_num_error_text').hide();
                         $('.abn-legal-name').html(resp.bussiness.name);
                         $('.abn-reg-date').html(resp.bussiness.effectiveFrom);
+                        $('.abn-state-name').html(resp.bussiness.stateName);
+                        $('.loan-abn .loan-form-field .wpcf7-form-control-wrap .fa').show();
                         $('[name="abn_num"]').data('valid', true);
                         $('.abn-info').show();
                     } else {
+                        $('.loan-abn .loan-form-field .wpcf7-form-control-wrap .fa').hide();
                         $('#abn_num_error_text, .abn-search-link').show();
                         $('.abn-info').hide();
                         $('[name="abn_num"]').data('valid', false);
@@ -218,11 +232,11 @@ function LoanExpress(config) {
                 this.container.data('loan_abn', $('[name="abn_num"]').val());
                 this.nextStep(e);
             }
-            var abn_num =  $('[name="abn_num"]').val();
-            if(!abn_num.length){
+            var abn_num = $('[name="abn_num"]').val();
+            if (!abn_num.length) {
                 alert('Please enter number abn to check');
             }
-        }else{
+        } else {
             this.nextStep(e);
         }
         //this.loadRelevantLender();
@@ -291,21 +305,24 @@ function LoanExpress(config) {
         this.container.data('action', 'create_application');
         this.container.data('cletoken', cletoken);
 
-        $.ajax({
-            type: 'POST',
-            url: ajaxurl,
-            data: this.container.data(),
-            success: function(resp) {
-                $('.additional-loader').hide();
-                if (!resp.errno) {
-                    $.removeCookie('_cletoken');
-                    $.removeCookie(cletoken);
-                    that.nextStep(e, false);
-                } else {
-                    alert(resp.msg);
+        var loanadditionalfrm = $('#loan-additional-frm');
+        if(loanadditionalfrm.valid()){
+            $.ajax({
+                type: 'POST',
+                url: ajaxurl,
+                data: this.container.data(),
+                success: function(resp) {
+                    $('.additional-loader').hide();
+                    if (!resp.errno) {
+                        $.removeCookie('_cletoken');
+                        $.removeCookie(cletoken);
+                        that.nextStep(e, false);
+                    } else {
+                        alert(resp.msg);
+                    }
                 }
-            }
-        });
+            });
+        }
     };
     this.nextStep = function(e, sync = true) {
         var currentStep = $(e).closest('.step');
@@ -325,7 +342,7 @@ function LoanExpress(config) {
                     } else {
                         $('.loan-indicators').css({display: 'none'});
                     }
-                    if(sync){
+                    if (sync) {
                         that.saveStep(nextStep.attr('id'));
                     }
                 }
@@ -335,7 +352,7 @@ function LoanExpress(config) {
                 $('.loan-indicators li').removeClass('active');
                 $('.loan-indicators li[data-step="' + stepId + '"]').addClass('active');
             }
-        }
+    }
     };
     this.saveStep = function(stepId) {
         var cledata = JSON.stringify({

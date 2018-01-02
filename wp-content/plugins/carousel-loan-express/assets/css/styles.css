@@ -396,3 +396,32 @@ table.lender-info td{
 .loan-offers .loan-form-field label.error{
     color: red !important;
 }
+.loan-products .step-buttons.active:hover{
+    background-color: #37a339 !important;
+    color: white !important;
+}
+.loan-products .step-buttons:hover{
+    background-color: white !important;
+    color:#238ac5 !important;
+}
+.abn-name span, .abn-date span, .abn-state span{
+    display: block;
+}
+.abn-name, .abn-date, .abn-state{
+    color: #37a339 !important;
+}
+.abn-name .fa, .abn-date .fa, .abn-state .fa{
+    color: white !important;
+}
+.loan-form-field .wpcf7-form-control-wrap{
+    display: block;
+    position: relative;
+}
+.loan-form-field .wpcf7-form-control-wrap .fa{
+    display: none;
+    position: absolute;
+    color: #37a339;
+    right: 8px;
+    top: 8px;
+    bottom: 0;
+}
