@@ -115,16 +115,14 @@ class CarouselLoanExpress {
         if ($phone) {
             $username = 'pabs';
             $password = 'hola!23';
-            $ref = 'abc123';
             $params = 'username=' . rawurlencode($username) .
                     '&password=' . rawurlencode($password) .
                     '&to=' . rawurlencode($phone) .
                     '&from=' . rawurlencode($source) .
-                    '&message=' . rawurlencode($content) .
-                    '&ref=' . rawurlencode($ref);
+                    '&message=' . rawurlencode($content);
             $ch = curl_init('https://api.smsbroadcast.com.au/api-adv.php');
             curl_setopt($ch, CURLOPT_POST, true);
-            curl_setopt($ch, CURLOPT_POSTFIELDS, $content);
+            curl_setopt($ch, CURLOPT_POSTFIELDS, $params);
             curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
             $output = curl_exec($ch);
             curl_close($ch);
@@ -134,7 +132,14 @@ class CarouselLoanExpress {
     public function sendEmail($args) {
         extract($args);
         if ($email) {
-            $sitename = get_bloginfo('name');
+            global $borrow_option;
+            if($borrow_option['logo']['url'] != ''){
+                $logo_url = esc_url($borrow_option['logo']['url']);
+            }else{
+                $logo_url = get_template_directory_uri().'/images/logo.png';
+            }
+            $content = '<p><a href="https://www.lendclick.com.au/" target="_blank"><img width="200px" src="https://www.lendclick.com.au/wp-content/uploads/2017/06/Logo32.png"/></a></p>'. $content;
+            $sitename = __('LendClick - Fast Small Business Loans');
             $siteemail = get_bloginfo('admin_email');
             $headers[] = sprintf('From: %s <%s>', $sitename, $siteemail);
             $headers[] = 'Content-Type: text/html; charset=UTF-8';
@@ -648,8 +653,6 @@ EOD;
                 $status = self::APP_STATUS_COMPLETE;
                 $content = __('Thank you, your application is created success and our lenders will contact you shortly');
                 update_post_meta($result, 'app_info', $_POST);
-//                update_post_meta($result, 'app_lenders', $loan_lenders);
-//                $this->requestLenders($loan_lenders, $_POST);
                 if ($cletoken) {
                     $this->clearCleConfig($cletoken);
                 }
@@ -662,7 +665,7 @@ EOD;
                 'token' => $cletoken,
                 'content' => $content,
                 'status' => $status,
-                'source' => __('LendClick Notification')
+                'source' => __('LendClick application Successful - Application #'.$result)
             ));
         }
         header('Content-Type: application/json');
