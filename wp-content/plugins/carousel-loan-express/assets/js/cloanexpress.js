@@ -66,6 +66,7 @@ function LoanExpress(config) {
             this.loanSlider.val(loan_amount);
         }
         $.cookie('_cletoken', cletoken);
+        $.cookie('appId', appId);
         if (this.config.stepValid) {
             this.stepValid = this.config.stepValid.split(',');
             $(this.config.stepValid).data('valid', true);
@@ -116,7 +117,7 @@ function LoanExpress(config) {
             $.ajax({
                 type: 'POST',
                 url: ajaxurl,
-                data: {action: 'create_user', user_name: name, user_email: email, user_phone: phone, cletoken: cletoken},
+                data: {action: 'cloanexpress_save', user_name: name, user_email: email, user_phone: phone, appId:appId},
                 success: function(resp) {
                     that.hideLoader();
                     if (!resp.errno) {
@@ -125,6 +126,10 @@ function LoanExpress(config) {
                         that.container.data('loan_customer_email', email);
                         that.container.data('loan_customer_phone', phone);
                         that.container.data('loan_customer_business', businessEle.val());
+                        if(resp.errno == 3){
+                            appId = resp.appId;
+                            UID = resp.UID;
+                        }
                         that.nextStep(e);
                     } else {
                         alert('Sorry we cant process your data.');
@@ -354,16 +359,16 @@ function LoanExpress(config) {
             }
     }
     };
-    this.saveStep = function(stepId) {
-        var cledata = JSON.stringify({
-            step: stepId,
-            stepValid: this.stepValid.join(),
-            data: this.container.data()
-        });
+    this.saveStep = function(stepId, status ='proccessing') {
+        if(appId == ''){
+            return this;
+        }
         var data = {
             action: 'save_step',
-            cletoken: cletoken,
-            cledata: cledata
+            data: this.container.data(),
+            appId: appId,
+            user_id: UID,
+            status: status
         };
         var that = this;
         that.showLoader();

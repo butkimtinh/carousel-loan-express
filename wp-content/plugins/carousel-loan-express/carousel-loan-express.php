@@ -25,13 +25,13 @@ class CarouselLoanExpress {
             add_action('load-post-new.php', array($this, 'init_metabox'));
             add_action('admin_init', array($this, 'add_role_caps'), 999);
             add_filter('pre_get_posts', array($this, 'applications_for_current_author'));
-            add_action('admin_enqueue_scripts', array($this,'enqueue_admin'));
+            add_action('admin_enqueue_scripts', array($this, 'enqueue_admin'));
         }
         add_action("wp_ajax_search_lender", array($this, 'search_lender'));
         add_action("wp_ajax_nopriv_search_lender", array($this, 'search_lender'));
 
-        add_action("wp_ajax_create_user", array($this, 'create_user'));
-        add_action("wp_ajax_nopriv_create_user", array($this, 'create_user'));
+        add_action("wp_ajax_cloanexpress_save", array($this, 'cloanexpress_save'));
+        add_action("wp_ajax_nopriv_cloanexpress_save", array($this, 'cloanexpress_save'));
 
         add_action("wp_ajax_create_application", array($this, 'create_application'));
         add_action("wp_ajax_nopriv_create_application", array($this, 'create_application'));
@@ -50,9 +50,50 @@ class CarouselLoanExpress {
 
         add_filter('cron_schedules', array($this, 'cloanexpress_time_schedule'));
 
+        add_filter('manage_application_posts_columns', array($this, 'set_clexpress_columns'));
+        add_action('manage_application_posts_custom_column', array($this, 'custom_clexpress_column'), 10, 2);
+
         register_activation_hook(__FILE__, array($this, 'onActivation'));
         register_deactivation_hook(__FILE__, array($this, 'onDeactivation'));
         register_uninstall_hook(__FILE__, array(__CLASS__, 'onUninstall'));
+    }
+
+    public function set_clexpress_columns($columns) {
+        return array_merge($columns, array('customer' => __('Customer'), 'status' => __('Status'), 'notified' => __('Notified')));
+    }
+
+    public function custom_clexpress_column($column, $post_id) {
+        switch ($column) {
+            case 'customer': {
+                    /* @var $post WP_Post */
+                    $post = get_post($post_id);
+                    if ($post) {
+                        $user_id = $post->post_author;
+                        echo '<a href="' . get_edit_user_link($user_id) . '" target="_blank">' . get_the_author_meta('email', $user_id) . '</a>';
+                    } else {
+                        _e('Unable to get author(s)');
+                    }
+                    break;
+                };
+            case 'status': {
+                    $app_status = get_post_meta($post_id, 'app_status', true);
+                    if ($app_status) {
+                        echo '<span class="' . $app_status . '">' . $app_status . '</span>';
+                    } else {
+                        echo '<span class="unavaiable">Not defined</span>';
+                    }
+                    break;
+                };
+            case 'notified': {
+                    $app_notified = get_post_meta($post_id, 'app_notified', true);
+                    if ($app_notified) {
+                        echo '<span class="avaiable">Send notified</span>';
+                    } else {
+                        echo '<span class="unavaiable">Not notified</span>';
+                    }
+                    break;
+                }
+        }
     }
 
     public function cloanexpress_time_schedule($schedules) {
@@ -154,6 +195,8 @@ class CarouselLoanExpress {
         <script type="text/javascript">
             var cleconfig = $.parseJSON('<?php echo $this->getCleConfigJson() ?>');
             var cletoken = '<?php echo $this->getCleToken() ?>';
+            var appId = '<?php echo $this->getAppId() ?>';
+            var UID;
             var loanExpress;
             $(document).ready(function() {
                 if ($('.cloanexpress').length > 0) {
@@ -166,6 +209,31 @@ class CarouselLoanExpress {
             });
         </script>
         <?php
+    }
+
+    public function getAppId() {
+        $appId = false;
+        if (isset($_COOKIE['__appId'])) {
+            $appId = $_COOKIE['__appId'];
+        } else {
+            if (is_user_logged_in()) {
+                $user = wp_get_current_user();
+                $user_id = $user->ID;
+                $my_post = array(
+                    'post_title' => __('Form Not Complete'),
+                    'post_content' => '',
+                    'post_status' => 'pending',
+                    'post_type' => 'application',
+                    'post_author' => $user_id,
+                );
+                $appId = wp_insert_post($my_post);
+                if (!is_wp_error($appId)) {
+                    $_COOKIE['__appId'] = $appId;
+                    add_post_meta($appId, 'app_status', self::APP_STATUS_INIT);
+                }
+            }
+        }
+        return $appId;
     }
 
     public function register_session() {
@@ -233,15 +301,16 @@ class CarouselLoanExpress {
     }
 
     public function enqueue_admin($hook) {
-        if ('post.php' !== $hook) {
-            return;
+        if ('post.php' == $hook) {
+            wp_enqueue_style('noUiSlider');
+            wp_enqueue_script('noUiSlider');
+            wp_enqueue_script('cloanexpress-js');
+            wp_enqueue_script('jquery.validate');
+            wp_enqueue_script('jquery.mask');
         }
-        wp_enqueue_style('noUiSlider');
-        
-        wp_enqueue_script('noUiSlider');
-        wp_enqueue_script('cloanexpress-js');
-        wp_enqueue_script('jquery.validate');
-        wp_enqueue_script('jquery.mask');
+        if ('edit.php' == $hook) {
+            wp_enqueue_style('cloanexpress-styles');
+        }
     }
 
     public function init_metabox() {
@@ -576,6 +645,102 @@ class CarouselLoanExpress {
         die;
     }
 
+    public function getOfferId($user_name = '', $user_email = '') {
+        $user_id = 0;
+        if (is_user_logged_in()) {
+            $user = wp_get_current_user();
+            $user_id = $user->ID;
+        } else {
+            if ($user_email && filter_var($user_email, FILTER_VALIDATE_EMAIL)) {
+                $home_url = get_home_url();
+                $login_url = get_home_url(null, 'login');
+                if (email_exists($user_email)) {
+                    $user = get_user_by('email', $user_email);
+                    $user_id = $user->ID;
+                } else {
+                    $user_login = 'customer_' . md5($user_email . time());
+                    $random_password = wp_generate_password(12, false);
+                    $userdata = array(
+                        'user_login' => $user_login,
+                        'user_pass' => $random_password,
+                        'user_email' => $user_email,
+                        'display_name' => $user_name,
+                        'nickname' => $user_login,
+                        'role' => 'manage_application'
+                    );
+                    $result = wp_insert_user($userdata);
+                    if (!is_wp_error($result)) {
+                        $user_id = $result;
+                        $subject = __('[Lend Click] Your account is created automate');
+                        $password_reset_url = get_home_url(NULL, 'password-reset');
+                        $sitename = get_bloginfo('name');
+                        $siteemail = get_bloginfo('admin_email');
+                        $headers[] = sprintf('From: %s <%s>', $sitename, $siteemail);
+                        $headers[] = 'Content-Type: text/html; charset=UTF-8';
+                        $content = <<<EOD
+                            <p><a href="$home_url" target="_blank"><img width="200px" src="$home_url/wp-content/uploads/2017/06/Logo32.png"/></a></p>
+                            <p> Thanks you! </p>
+                            <p> Access login at: <a href="$login_url">$login_url</a></p>
+                            <p> Username: $user_email</p>
+                            <p> Password: $random_password</p>
+                            <p> You can reset your password at: $password_reset_url</p>
+EOD;
+                        wp_mail($user_email, $subject, $content, $headers);
+                    }
+                }
+            }
+        }
+        return $user_id;
+    }
+
+    public function cloanexpress_save() {
+        $data = array(
+            'errno' => 1,
+            'msg' => 'Sorry! 404 Not found'
+        );
+        extract($_POST);
+        $user_id = $this->getOfferId($user_name, $user_email);
+        if (!$user_id) {
+            $data['errno'] = 2;
+            $data['msg'] = __('User is invalid');
+        } else {
+            $data['UID'] = $user_id;
+            if ($app_id) {
+                $post = get_post($app_id);
+                if ($post && $post->post_author == -1) {
+                    wp_update_post(array(
+                        'ID' => $app_id,
+                        'post_author' => $user_id
+                    ));
+                } else {
+                    $data['msg'] = __('Application is invalid');
+                }
+            } else {
+                $my_post = array(
+                    'post_title' => __('Form Not Complete'),
+                    'post_content' => '',
+                    'post_status' => 'pending',
+                    'post_type' => 'application',
+                    'post_author' => $user_id,
+                );
+                $result = wp_insert_post($my_post);
+                if (is_wp_error($result)) {
+                    $data['msg'] = __('Cant create application');
+                } else {
+                    add_post_meta($result, 'app_status', self::APP_STATUS_INIT);
+                    $data['errno'] = 3;
+                    $data['msg'] = 'Application is created';
+                    $data['appId'] = $result;
+                }
+            }
+        }
+
+        header('Access-Control-Allow-Origin: *');
+        header('Content-Type: application/json');
+        echo json_encode($data);
+        die;
+    }
+
     public function create_user() {
         header('Access-Control-Allow-Origin: *');
         $data = array(
@@ -600,7 +765,7 @@ class CarouselLoanExpress {
                 $data['author_id'] = $userdata->ID;
             } else {
                 $user_login = 'customer_' . md5($user_email . time());
-                $random_password = wp_generate_password($length = 12, $include_standard_special_chars = false);
+                $random_password = wp_generate_password(12, false);
                 $userdata = array(
                     'user_login' => $user_login,
                     'user_pass' => $random_password,
@@ -691,7 +856,30 @@ EOD;
             'errno' => 1,
             'msg' => 'Sorry! 404 Not found'
         );
-        if (isset($_POST['cletoken']) && isset($_POST['cledata']) && $this->saveCleConfig($_POST['cletoken'], $_POST['cledata'])) {
+        extract($_POST);
+        if (!$user_id) {
+            echo json_encode($data);
+            die;
+        }
+        if (is_user_logged_in()) {
+            $user = wp_get_current_user();
+            if ($user_id != $user->ID) {
+                echo json_encode($data);
+                die;
+            }
+        }
+
+        $post = get_post($appId);
+        
+        if ($post) {
+            if($post->post_author != $user_id){
+                echo json_encode($data);
+                die;
+            }
+            
+            update_post_meta($appId, 'app_info', $data);
+            update_post_meta($appId, 'app_status', $status);
+
             $data['errno'] = 0;
             $data['msg'] = 'Success';
         }
@@ -1090,7 +1278,6 @@ EOD;
     public function clearCleConfig($token) {
         unset($_COOKIE['_cletoken']);
         unset($_COOKIE[$token]);
-        //unset($_SESSION['_cletoken']);
     }
 
 }

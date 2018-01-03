@@ -425,3 +425,18 @@ table.lender-info td{
     top: 8px;
     bottom: 0;
 }
+.init{
+    color: #258ac5;
+}
+.complete, .avaiable{
+    color: #1ea551;
+}
+.failure{
+    color:#F00;
+}
+.processing{
+    color: #cc3300;
+}
+.unavaiable{
+    color: gray;
+}
