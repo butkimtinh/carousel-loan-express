@@ -194,9 +194,7 @@ class CarouselLoanExpress {
         ?>
         <script type="text/javascript">
             var cleconfig = $.parseJSON('<?php echo $this->getCleConfigJson() ?>');
-            var cletoken = '<?php echo $this->getCleToken() ?>';
-            var appId = '<?php echo $this->getAppId() ?>';
-            var UID;
+            var publicKey = '<?php echo $this->getPublicKey() ?>'
             var loanExpress;
             $(document).ready(function() {
                 if ($('.cloanexpress').length > 0) {
@@ -211,29 +209,22 @@ class CarouselLoanExpress {
         <?php
     }
 
-    public function getAppId() {
-        $appId = false;
-        if (isset($_COOKIE['__appId'])) {
-            $appId = $_COOKIE['__appId'];
+    public function getPublicKey() {
+        $publicKey = false;
+        if (isset($_COOKIE['publicKey']) && strlen($_COOKIE['publicKey']) > 0) {
+            $publicKey = $_COOKIE['publicKey'];
         } else {
-            if (is_user_logged_in()) {
+            if (is_user_logged_in() && is_front_page()) {
                 $user = wp_get_current_user();
                 $user_id = $user->ID;
-                $my_post = array(
-                    'post_title' => __('Form Not Complete'),
-                    'post_content' => '',
-                    'post_status' => 'pending',
-                    'post_type' => 'application',
-                    'post_author' => $user_id,
-                );
-                $appId = wp_insert_post($my_post);
+                $appId = $this->create_app($user->ID);
                 if (!is_wp_error($appId)) {
-                    $_COOKIE['__appId'] = $appId;
-                    add_post_meta($appId, 'app_status', self::APP_STATUS_INIT);
+                    $publicKey = get_post_meta($appId, 'public_key', true);
+                    $_COOKIE['publicKey'] = $publicKey;
                 }
             }
         }
-        return $appId;
+        return $publicKey;
     }
 
     public function register_session() {
@@ -652,41 +643,11 @@ class CarouselLoanExpress {
             $user_id = $user->ID;
         } else {
             if ($user_email && filter_var($user_email, FILTER_VALIDATE_EMAIL)) {
-                $home_url = get_home_url();
-                $login_url = get_home_url(null, 'login');
                 if (email_exists($user_email)) {
                     $user = get_user_by('email', $user_email);
                     $user_id = $user->ID;
                 } else {
-                    $user_login = 'customer_' . md5($user_email . time());
-                    $random_password = wp_generate_password(12, false);
-                    $userdata = array(
-                        'user_login' => $user_login,
-                        'user_pass' => $random_password,
-                        'user_email' => $user_email,
-                        'display_name' => $user_name,
-                        'nickname' => $user_login,
-                        'role' => 'manage_application'
-                    );
-                    $result = wp_insert_user($userdata);
-                    if (!is_wp_error($result)) {
-                        $user_id = $result;
-                        $subject = __('[Lend Click] Your account is created automate');
-                        $password_reset_url = get_home_url(NULL, 'password-reset');
-                        $sitename = get_bloginfo('name');
-                        $siteemail = get_bloginfo('admin_email');
-                        $headers[] = sprintf('From: %s <%s>', $sitename, $siteemail);
-                        $headers[] = 'Content-Type: text/html; charset=UTF-8';
-                        $content = <<<EOD
-                            <p><a href="$home_url" target="_blank"><img width="200px" src="$home_url/wp-content/uploads/2017/06/Logo32.png"/></a></p>
-                            <p> Thanks you! </p>
-                            <p> Access login at: <a href="$login_url">$login_url</a></p>
-                            <p> Username: $user_email</p>
-                            <p> Password: $random_password</p>
-                            <p> You can reset your password at: $password_reset_url</p>
-EOD;
-                        wp_mail($user_email, $subject, $content, $headers);
-                    }
+                    $user_id = $this->create_new_user($user_name, $user_email);
                 }
             }
         }
@@ -704,33 +665,28 @@ EOD;
             $data['errno'] = 2;
             $data['msg'] = __('User is invalid');
         } else {
-            $data['UID'] = $user_id;
-            if ($app_id) {
-                $post = get_post($app_id);
-                if ($post && $post->post_author == -1) {
+            if ($publicKey) {
+                if ($this->valid_app($publicKey)) {
+                    $app = $this->get_app($publicKey);
                     wp_update_post(array(
-                        'ID' => $app_id,
+                        'ID' => $app->ID,
                         'post_author' => $user_id
                     ));
+                    $data['errno'] = 0;
+                    $data['msg'] = 'Application is updated';
                 } else {
                     $data['msg'] = __('Application is invalid');
                 }
             } else {
-                $my_post = array(
-                    'post_title' => __('Form Not Complete'),
-                    'post_content' => '',
-                    'post_status' => 'pending',
-                    'post_type' => 'application',
-                    'post_author' => $user_id,
-                );
-                $result = wp_insert_post($my_post);
-                if (is_wp_error($result)) {
+                $appId = $this->create_app($user_id);
+                if (is_wp_error($appId)) {
                     $data['msg'] = __('Cant create application');
                 } else {
-                    add_post_meta($result, 'app_status', self::APP_STATUS_INIT);
+                    $publicKey = get_post_meta($appId, 'public_key',true);
+                    $_COOKIE['publicKey'] = $publicKey;
+                    $data['publicKey'] = $publicKey;
                     $data['errno'] = 3;
                     $data['msg'] = 'Application is created';
-                    $data['appId'] = $result;
                 }
             }
         }
@@ -739,6 +695,96 @@ EOD;
         header('Content-Type: application/json');
         echo json_encode($data);
         die;
+    }
+
+    public function create_new_user($user_name, $user_email) {
+        $user_login = 'customer_' . md5($user_email . time());
+        $random_password = wp_generate_password(12, false);
+        $userdata = array(
+            'user_login' => $user_login,
+            'user_pass' => $random_password,
+            'user_email' => $user_email,
+            'display_name' => $user_name,
+            'nickname' => $user_login,
+            'role' => 'manage_application'
+        );
+        $result = wp_insert_user($userdata);
+        if (!is_wp_error($result)) {
+            $home_url = get_home_url();
+            $login_url = get_home_url(null, 'login');
+            $password_reset_url = get_home_url(NULL, 'password-reset');
+
+            $subject = __('[Lend Click] Your account is created automate');
+            $sitename = get_bloginfo('name');
+            $siteemail = get_bloginfo('admin_email');
+            $headers[] = sprintf('From: %s <%s>', $sitename, $siteemail);
+            $headers[] = 'Content-Type: text/html; charset=UTF-8';
+            $content = <<<EOD
+                            <p><a href="$home_url" target="_blank"><img width="200px" src="$home_url/wp-content/uploads/2017/06/Logo32.png"/></a></p>
+                            <p> Thanks you! </p>
+                            <p> Access login at: <a href="$login_url">$login_url</a></p>
+                            <p> Username: $user_email</p>
+                            <p> Password: $random_password</p>
+                            <p> You can reset your password at: $password_reset_url</p>
+EOD;
+            wp_mail($user_email, $subject, $content, $headers);
+        }
+        return $result;
+    }
+
+    public function create_app($user_id = -1, $title = 'Form Not Complete', $status = 'pending') {
+        $parmas = array(
+            'post_title' => $title,
+            'post_content' => '',
+            'post_status' => $status,
+            'post_type' => 'application',
+            'post_author' => $user_id,
+        );
+        $appId = wp_insert_post($parmas);
+        if (!is_wp_error($appId)) {
+            $appKeys = $this->generate_app_key();
+            extract($appKeys);
+            add_post_meta($appId, 'public_key', $public_key);
+            add_post_meta($appId, 'private_key', $private_key);
+            add_post_meta($appId, 'app_status', self::APP_STATUS_INIT);
+        }
+        return $appId;
+    }
+
+    public function generate_app_key() {
+        $public_key = md5($_SERVER['SERVER_ADDR'] . time());
+        $private_key = md5($public_key) . ':' . sha1('Fjp$bjP1pc+');
+        return array(
+            'public_key' => $public_key,
+            'private_key' => $private_key,
+        );
+    }
+
+    public function valid_app($public_key) {
+        $app = $this->get_app($public_key);
+        if ($app) {
+            $private_key = get_post_meta($app->ID, 'private_key', true);
+            $token = md5($public_key) . ':' . sha1('Fjp$bjP1pc+');
+            if ($private_key && $token == $private_key) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public function get_app($public_key) {
+        $posts = new WP_Query(array(
+            'post_type' => 'application',
+            'post_status' => array('publish', 'pending'),
+            'meta_query' => array(
+                array(
+                    'key' => 'public_key',
+                    'value' => $public_key,
+                )
+            ),
+        ));
+        wp_reset_query();
+        return $posts->have_posts() ? $posts->post : false;
     }
 
     public function create_user() {
@@ -857,29 +903,10 @@ EOD;
             'msg' => 'Sorry! 404 Not found'
         );
         extract($_POST);
-        if (!$user_id) {
-            echo json_encode($data);
-            die;
-        }
-        if (is_user_logged_in()) {
-            $user = wp_get_current_user();
-            if ($user_id != $user->ID) {
-                echo json_encode($data);
-                die;
-            }
-        }
-
-        $post = get_post($appId);
-        
-        if ($post) {
-            if($post->post_author != $user_id){
-                echo json_encode($data);
-                die;
-            }
-            
-            update_post_meta($appId, 'app_info', $data);
-            update_post_meta($appId, 'app_status', $status);
-
+        if ($this->valid_app($publicKey)) {
+            $app = $this->get_app($publicKey);
+            update_post_meta($app->ID, 'app_info', $app_info);
+            update_post_meta($app->ID, 'app_status', $status);
             $data['errno'] = 0;
             $data['msg'] = 'Success';
         }

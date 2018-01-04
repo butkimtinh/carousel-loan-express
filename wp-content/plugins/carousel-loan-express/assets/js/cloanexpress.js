@@ -65,8 +65,7 @@ function LoanExpress(config) {
         if (loan_amount) {
             this.loanSlider.val(loan_amount);
         }
-        $.cookie('_cletoken', cletoken);
-        $.cookie('appId', appId);
+        $.cookie('publicKey', publicKey);
         if (this.config.stepValid) {
             this.stepValid = this.config.stepValid.split(',');
             $(this.config.stepValid).data('valid', true);
@@ -96,9 +95,10 @@ function LoanExpress(config) {
     };
     this.fieldOnChange = function(e) {
         if ($(e).valid() == true) {
-            $(e).closest('.wpcf7-form-control-wrap').find('.fa').css({display:'block'});
+            $(e).closest('.wpcf7-form-control-wrap').find('.fa').css({display: 'block'});
         } else {
-            $(e).closest('.wpcf7-form-control-wrap').find('.fa').css({display:'none'});;
+            $(e).closest('.wpcf7-form-control-wrap').find('.fa').css({display: 'none'});
+            ;
         }
     };
     this.stepLoanOffers = function(e) {
@@ -117,19 +117,18 @@ function LoanExpress(config) {
             $.ajax({
                 type: 'POST',
                 url: ajaxurl,
-                data: {action: 'cloanexpress_save', user_name: name, user_email: email, user_phone: phone, appId:appId},
+                data: {action: 'cloanexpress_save', user_name: name, user_email: email, user_phone: phone, publicKey: publicKey},
                 success: function(resp) {
                     that.hideLoader();
-                    if (!resp.errno) {
-                        that.container.data('loan_author_id', resp.author_id);
+                    if (resp.errno == 3) {
+                        publicKey = resp.publicKey;
+                    }
+                    if (resp.errno != 1 && resp.errno != 2) {
                         that.container.data('loan_customer_name', name);
                         that.container.data('loan_customer_email', email);
                         that.container.data('loan_customer_phone', phone);
                         that.container.data('loan_customer_business', businessEle.val());
-                        if(resp.errno == 3){
-                            appId = resp.appId;
-                            UID = resp.UID;
-                        }
+
                         that.nextStep(e);
                     } else {
                         alert('Sorry we cant process your data.');
@@ -308,10 +307,9 @@ function LoanExpress(config) {
         this.container.data('business_phone_number', $('[name="business_phone_number"]').val());
         this.container.data('best_time_to_reach', $('[name="best_time_to_reach"]').val());
         this.container.data('action', 'create_application');
-        this.container.data('cletoken', cletoken);
 
         var loanadditionalfrm = $('#loan-additional-frm');
-        if(loanadditionalfrm.valid()){
+        if (loanadditionalfrm.valid()) {
             $.ajax({
                 type: 'POST',
                 url: ajaxurl,
@@ -319,8 +317,6 @@ function LoanExpress(config) {
                 success: function(resp) {
                     $('.additional-loader').hide();
                     if (!resp.errno) {
-                        $.removeCookie('_cletoken');
-                        $.removeCookie(cletoken);
                         that.nextStep(e, false);
                     } else {
                         alert(resp.msg);
@@ -359,15 +355,14 @@ function LoanExpress(config) {
             }
     }
     };
-    this.saveStep = function(stepId, status ='proccessing') {
-        if(appId == ''){
+    this.saveStep = function(stepId, status = 'processing') {
+        if (publicKey == '') {
             return this;
         }
         var data = {
             action: 'save_step',
-            data: this.container.data(),
-            appId: appId,
-            user_id: UID,
+            app_info: this.container.data(),
+            publicKey: publicKey,
             status: status
         };
         var that = this;
@@ -378,9 +373,6 @@ function LoanExpress(config) {
             data: data,
             success: function(resp) {
                 that.hideLoader();
-                if (!resp.errno) {
-                    $.cookie(cletoken, cledata);
-                }
             }
         });
     };
