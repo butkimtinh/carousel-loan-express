@@ -189,8 +189,7 @@ class CarouselLoanExpress {
             $siteemail = get_bloginfo('admin_email');
             $headers[] = sprintf('From: %s <%s>', $sitename, $siteemail);
             $headers[] = 'Content-Type: text/html; charset=UTF-8';
-            $notified = wp_mail($email, $source, $content, $headers);
-            $this->updateCleConfig(array('status' => $status, 'notified' => $notified), array('token' => $token));
+            wp_mail($email, $source, $content, $headers);
         }
     }
 
@@ -256,18 +255,6 @@ class CarouselLoanExpress {
         } else {
             return json_encode(array());
         }
-    }
-
-    public function getCleToken() {
-        if (isset($_GET['_cletoken'])) {
-            $_cltoken = $_GET['_cletoken'];
-        } elseif (isset($_COOKIE['_cletoken'])) {
-            $_cltoken = $_COOKIE['_cletoken'];
-        } else {
-            $_cltoken = md5($_SERVER['REMOTE_ADDR'] . time());
-        }
-        //$_SESSION['_cletoken'] = $_cltoken;
-        return $_cltoken;
     }
 
     public function init() {
@@ -758,6 +745,7 @@ EOD;
             add_post_meta($appId, 'public_key', $public_key);
             add_post_meta($appId, 'private_key', $private_key);
             add_post_meta($appId, 'app_status', self::APP_STATUS_INIT);
+            add_post_meta($appId, 'app_notified', self::APP_NOT_NOTIFIED);
             $_COOKIE['publicKey'] = $public_key;
         }
         return $appId;
@@ -799,112 +787,19 @@ EOD;
         return $posts->have_posts() ? $posts->post : false;
     }
 
-    public function create_user() {
-        header('Access-Control-Allow-Origin: *');
-        $data = array(
-            'errno' => 1,
-            'msg' => 'Sorry! 404 Not found'
-        );
-        extract($_POST);
-        if ($user_email && filter_var($user_email, FILTER_VALIDATE_EMAIL)) {
-            if ($cletoken) {
-                $phone = preg_replace('/\D/', '', $user_phone);
-                $this->updateCleConfig(array(
-                    'email' => $user_email,
-                    'phone' => $phone,
-                        ), array(
-                    'token' => $cletoken
-                ));
-            }
-            if (email_exists($user_email)) {
-                $userdata = get_user_by('email', $user_email);
-                $data['errno'] = 0;
-                $data['msg'] = __('Success');
-                $data['author_id'] = $userdata->ID;
-            } else {
-                $user_login = 'customer_' . md5($user_email . time());
-                $random_password = wp_generate_password(12, false);
-                $userdata = array(
-                    'user_login' => $user_login,
-                    'user_pass' => $random_password,
-                    'user_email' => $user_email,
-                    'display_name' => $user_name,
-                    'nickname' => $user_login,
-                    'role' => 'manage_application'
-                );
-                $user_id = wp_insert_user($userdata);
-                if (is_wp_error($user_id)) {
-                    $data['msg'] = __('Cant create customer');
-                } else {
-                    $subject = __('[Lend Click] Your account is created automate');
-                    $data['errno'] = 0;
-                    $data['msg'] = __('Success');
-                    $data['author_id'] = $user_id;
-                    // send mail
-                    $sitename = get_bloginfo('name');
-                    $siteemail = get_bloginfo('admin_email');
-                    $headers[] = sprintf('From: %s <%s>', $sitename, $siteemail);
-                    $headers[] = 'Content-Type: text/html; charset=UTF-8';
-                    $content = <<<EOD
-                    <p> Thanks you! </p>
-                    <p> Access login at: https://www.lendclick.com.au/wp-login.php</p>
-                    <p> Username: $user_email</p>
-                    <p> Password: $random_password</p>
-EOD;
-                    wp_mail($user_email, $subject, $content, $headers);
-                }
-            }
+    public function app_notified($params) {
+        extract($params);
+        if (!$appId) {
+            return;
         }
-        header('Content-Type: application/json');
-        echo json_encode($data);
-        die;
-    }
-
-    public function create_application() {
-        header('Access-Control-Allow-Origin: *');
-        $data = array(
-            'errno' => 1,
-            'msg' => 'Sorry! 404 Not found'
-        );
-        extract($_POST);
-        if ($loan_amount && $loan_terms && $loan_products && $loan_customer_email && is_numeric($loan_author_id)) {
-            $my_post = array(
-                'post_title' => sprintf('%s <%s>', $loan_customer_name, $loan_customer_email),
-                'post_content' => '',
-                'post_status' => 'publish',
-                'post_type' => 'application',
-                'post_author' => $loan_author_id,
-            );
-            // Insert the post into the database
-            $result = wp_insert_post($my_post);
-            if ($result == 0 || $result instanceof WP_Error) {
-                $data['msg'] = __('Sorry we cant create an application at the moment. Please try again later.');
-                $status = self::APP_STATUS_FAILURE;
-                $content = __('We cant create your application');
-            } else {
-                $data['errno'] = 0;
-                $data['msg'] = __('Thank you, our lenders will contact you shortly');
-                $status = self::APP_STATUS_COMPLETE;
-                $content = __('Thank you, your application is created success and our lenders will contact you shortly');
-                update_post_meta($result, 'app_info', $_POST);
-                if ($cletoken) {
-                    $this->clearCleConfig($cletoken);
-                }
-            }
-
-            $phone = preg_replace('/\D/', '', $loan_customer_phone);
-            do_action('lendclick_notification', array(
-                'email' => $loan_customer_email,
-                'phone' => $phone,
-                'token' => $cletoken,
-                'content' => $content,
-                'status' => $status,
-                'source' => __('LendClick application Successful - Application #' . $result)
-            ));
-        }
-        header('Content-Type: application/json');
-        echo json_encode($data);
-        die;
+        do_action('lendclick_notification', array(
+            'email' => $email,
+            'phone' => $phone,
+            'content' => $content,
+            'source' => $source
+        ));
+        update_post_meta($appId, 'app_status', $status);
+        update_post_meta($appId, 'app_notified', self::APP_NOTIFIED);
     }
 
     public function save_step() {
@@ -919,11 +814,34 @@ EOD;
             $app = $this->get_app($publicKey);
             update_post_meta($app->ID, 'app_info', $app_info);
             update_post_meta($app->ID, 'app_status', $status);
+            if ($status == self::APP_STATUS_COMPLETE) {
+                wp_update_post(array(
+                    'ID' => $app->ID,
+                    'post_title' => 'Application #' . $app->ID,
+                    'post_status' => 'publish'
+                ));
+                $phone = preg_replace('/\D/', '', $app_info['loan_customer_phone']);
+                $this->app_notified(array(
+                    'appId' => $app->ID,
+                    'phone' => $phone,
+                    'email' => $app_info['loan_customer_email'],
+                    'content' => __('Thank you, our lenders will contact you shortly'),
+                    'status' => self::APP_STATUS_COMPLETE,
+                    'source' => __('LendClick application Successful - Application #' . $app->ID)
+                ));
+                $this->app_clean($app->ID);
+            }
             $data['errno'] = 0;
             $data['msg'] = 'Success';
         }
         echo json_encode($data);
         die;
+    }
+
+    public function app_clean($appId) {
+        delete_post_meta($appId, 'public_key');
+        delete_post_meta($appId, 'private_key');
+        unset($_COOKIE['publicKey']);
     }
 
     public function search_lender() {
@@ -1156,36 +1074,54 @@ EOD;
 
     public function cloanexpress_schedule() {
         global $wpdb;
-        $clepxress_tbl = $wpdb->prefix . "clepxress";
-        $sql = 'SELECT * FROM ' . $clepxress_tbl . ' WHERE updated_at < (NOW()- INTERVAL 6 HOUR) and status = \'processing\' and notified = 0';
+        $posts_tbl = $wpdb->prefix . "posts";
+        $postmeta_tbl = $wpdb->prefix . "postmeta";
+        $sql = <<<EOD
+                SELECT a.ID 
+                FROM {$wpdb->posts} as a, {$wpdb->postmeta} as b, {$wpdb->postmeta} as c
+                WHERE a.ID = b.post_id 
+                AND a.ID = c.post_id
+                
+                AND b.meta_key = 'app_status' 
+                AND b.meta_value = 'processing'
+                
+                AND c.meta_key = 'app_notified' 
+                AND c.meta_value = '0'
+                
+                AND a.post_status = 'pending' 
+                AND a.post_type = 'application'
+                AND a.post_date < (NOW()- INTERVAL 6 HOUR)
+EOD;
         $results = $wpdb->get_results($sql);
         if (count($results)) {
             foreach ($results as $object) {
-                if (!$object->email || !$object->phone) {
+                $appID = $object->ID;
+                $app_info = get_post_meta($appID, 'app_info', true);
+                if (!$app_info || !is_array($app_info)) {
                     continue;
                 }
-                $email = $object->email;
-                $token = $object->token;
-                $data = json_decode(json_decode(stripslashes($object->data), true), true);
-                $post_meta = $data && isset($data['data']) ? $data['data'] : array();
+                $loan_customer_email = '';
+                $loan_customer_phone = '';
 
-                $link = $this->getLinkApplicationNotComplete($email, $token, $post_meta);
-                if (!$link) {
+                extract($app_info);
+                if (!$loan_customer_email || !$loan_customer_phone) {
                     continue;
                 }
-                $phone = $object->phone;
+                $email = $loan_customer_email;
+                $phone = preg_replace('/\D/', '', $loan_customer_phone);
+                $link = get_home_url(NULL, 'account/app') . '?id=' . $appID;
+
                 $params = array(
+                    'appId' => $appID,
                     'email' => $email,
                     'phone' => $phone,
-                    'token' => $token,
                     'content' => sprintf('Please complete this form: <a href="%s" target="_blank">%s</a>', $link, $link),
-                    'status' => 'failure',
-                    'source' => __('LendClick Notification')
+                    'status' => self::APP_STATUS_FAILURE,
+                    'source' => __('LendClick application Failure - Application #' . $appID)
                 );
-                do_action('lendclick_notification', $params);
+                $this->app_notified($params);
             }
         }
-        $wpdb->query('DELETE FROM ' . $clepxress_tbl . ' WHERE expired_at < NOW()');
     }
 
     protected function getLinkApplicationNotComplete($email, $token, $post_meta = array()) {
@@ -1224,24 +1160,24 @@ EOD;
             'edit_users' => false,
             'level_0' => true,
         ));
-        $table_name = $wpdb->prefix . "clepxress";
-        $charset_collate = $wpdb->get_charset_collate();
-        $sql = "CREATE TABLE $table_name (
-		`id` int(11) NOT NULL AUTO_INCREMENT,
-                `email` varchar(128) NULL,
-                `phone` varchar(64) NULL,
-                `status` varchar(64) NULL,
-                `notified` int(1) NULL,
-                `token` varchar(32) NOT NULL,
-                `data` text NOT NULL,
-                `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                `updated_at` datetime NOT NULL,
-                `expired_at` datetime NOT NULL,
-		PRIMARY KEY (`id`),
-                KEY `token` (`token`)
-	) $charset_collate;";
-        require_once( ABSPATH . 'wp-admin/includes/upgrade.php' );
-        dbDelta($sql);
+//        $table_name = $wpdb->prefix . "clepxress";
+//        $charset_collate = $wpdb->get_charset_collate();
+//        $sql = "CREATE TABLE $table_name (
+//		`id` int(11) NOT NULL AUTO_INCREMENT,
+//                `email` varchar(128) NULL,
+//                `phone` varchar(64) NULL,
+//                `status` varchar(64) NULL,
+//                `notified` int(1) NULL,
+//                `token` varchar(32) NOT NULL,
+//                `data` text NOT NULL,
+//                `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+//                `updated_at` datetime NOT NULL,
+//                `expired_at` datetime NOT NULL,
+//		PRIMARY KEY (`id`),
+//                KEY `token` (`token`)
+//	) $charset_collate;";
+//        require_once( ABSPATH . 'wp-admin/includes/upgrade.php' );
+//        dbDelta($sql);
     }
 
     public function onDeactivation() {
@@ -1253,70 +1189,10 @@ EOD;
     }
 
     public static function destroy() {
-        global $wpdb;
         remove_role('manage_application');
         wp_clear_scheduled_hook('cloanexpress_event');
-        $table_name = $wpdb->prefix . "clepxress";
-        $wpdb->query("DROP TABLE IF EXISTS $table_name");
-    }
-
-    public function saveCleConfig($token, $data) {
-        global $wpdb;
-        $table_name = $wpdb->prefix . "clepxress";
-        $token = esc_sql($token);
-        $data = json_encode($data);
-        $current_time = time();
-        $created_at = date('Y-m-d H:i:s', $current_time);
-        $expired_at = date('Y-m-d H:i:s', $current_time + 7 * 24 * 60 * 60);
-        if ($this->hasCleToken($token)) {
-            $r = $wpdb->update($table_name, array('data' => $data, 'status' => self::APP_STATUS_PROCESSING, 'notified' => self::APP_NOT_NOTIFIED, 'updated_at' => $created_at, 'expired_at' => $expired_at), array('token' => $token));
-        } else {
-            $r = $wpdb->insert($table_name, array('token' => $token, 'data' => $data, 'status' => self::APP_STATUS_INIT, 'notified' => self::APP_NOT_NOTIFIED, 'updated_at' => $created_at, 'created_at' => $created_at, 'expired_at' => $expired_at));
-        }
-        return $r;
-    }
-
-    public function updateCleConfig($data, $where) {
-        global $wpdb;
-        $table_name = $wpdb->prefix . "clepxress";
-        $current_time = time();
-        $created_at = date('Y-m-d H:i:s', $current_time);
-        $expired_at = date('Y-m-d H:i:s', $current_time + 7 * 24 * 60 * 60);
-        $data_default = array('updated_at' => $created_at, 'expired_at' => $expired_at);
-        $wpdb->update($table_name, array_merge($data_default, $data), $where);
-    }
-
-    public function saveStatusCls($token, $status, $notified) {
-        global $wpdb;
-        $table_name = $wpdb->prefix . "clepxress";
-        $current_time = time();
-        $created_at = date('Y-m-d H:i:s', $current_time);
-        $expired_at = date('Y-m-d H:i:s', $current_time + 7 * 24 * 60 * 60);
-        $wpdb->update($table_name, array('status' => $status, 'notified' => $notified, 'updated_at' => $created_at, 'expired_at' => $expired_at), array('token' => $token));
-    }
-
-    public function hasCleToken($token) {
-        global $wpdb;
-        $table_name = $wpdb->prefix . "clepxress";
-        $result = $wpdb->get_row("SELECT id FROM $table_name WHERE token = '$token'");
-        return (bool) $result;
-    }
-
-    public function getCleConfig($token) {
-        global $wpdb;
-        $table_name = $wpdb->prefix . "clepxress";
-        return $wpdb->get_row("SELECT data FROM $table_name WHERE token = '$token'");
-    }
-
-    public function deleteCleConfig($token) {
-        global $wpdb;
-        $table_name = $wpdb->prefix . "clepxress";
-        return $wpdb->delete($table_name, array('token' => $token));
-    }
-
-    public function clearCleConfig($token) {
-        unset($_COOKIE['_cletoken']);
-        unset($_COOKIE[$token]);
+        // $table_name = $wpdb->prefix . "clepxress";
+        // $wpdb->query("DROP TABLE IF EXISTS $table_name");
     }
 
 }

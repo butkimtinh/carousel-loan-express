@@ -308,27 +308,12 @@ function LoanExpress() {
         }
     };
     this.stepFinish = function(e) {
-        $('.additional-loader').show();
-        var that = this;
         this.container.data('business_phone_number', $('[name="business_phone_number"]').val());
         this.container.data('best_time_to_reach', $('[name="best_time_to_reach"]').val());
         this.container.data('action', 'create_application');
-
         var loanadditionalfrm = $('#loan-additional-frm');
         if (loanadditionalfrm.valid()) {
-            $.ajax({
-                type: 'POST',
-                url: ajaxurl,
-                data: this.container.data(),
-                success: function(resp) {
-                    $('.additional-loader').hide();
-                    if (!resp.errno) {
-                        that.nextStep(e, false);
-                    } else {
-                        alert(resp.msg);
-                    }
-                }
-            });
+            this.nextStep(e, false);
         }
     };
     this.nextStep = function(e, sync = true) {
@@ -349,9 +334,11 @@ function LoanExpress() {
                     } else {
                         $('.loan-indicators').css({display: 'none'});
                     }
-                    if (sync) {
-                        that.saveStep(nextStep.attr('id'));
+                    var status = 'processing';
+                    if(!sync){
+                        status = 'complete';
                     }
+                    that.saveStep(nextStep.attr('id'), status);
                 }
             });
             if (indicator) {
