@@ -48,29 +48,35 @@ function LoanExpresSlider(config) {
         return this.slided;
     }
 }
-function LoanExpress(config) {
+function LoanExpress() {
     this.valid = false;
-    this.config = config;
     this.loanSlider;
     this.container;
     this.stepValid = [];
     this.initialize = function() {
-        this.container = $('.cloanexpress');
-        this.container.data(this.config.data);
-        this.initStep();
+        this.loadConfig();
         this.loanSlider = new LoanExpresSlider({'max': 1000000, 'min': 5000, 'step': 5000, 'start': 500000});
         this.loanSlider.initialize();
+    };
 
-        var loan_amount = this.container.data('loan_amount');
-        if (loan_amount) {
-            this.loanSlider.val(loan_amount);
-        }
-        $.cookie('publicKey', publicKey);
-        if (this.config.stepValid) {
-            this.stepValid = this.config.stepValid.split(',');
-            $(this.config.stepValid).data('valid', true);
-            this.step(document.getElementById(this.config.step));
-        }
+    this.loadConfig = function() {
+        var that = this;
+        $.ajax({
+            type: 'POST',
+            url: ajaxurl,
+            data: {action: 'cloanexpress_config'},
+            success: function(resp) {
+                that.container = $('.cloanexpress');
+                that.container.data($.parseJSON(resp.cleconfig));
+                $.cookie('publicKey', resp.public_key);
+                publicKey = resp.public_key;
+                that.initStep();
+                var loan_amount = that.container.data('loan_amount');
+                if (loan_amount) {
+                    that.loanSlider.val(loan_amount);
+                }
+            }
+        });
     };
 
     this.stepLoanSlider = function(e) {
@@ -122,13 +128,13 @@ function LoanExpress(config) {
                     that.hideLoader();
                     if (resp.errno == 3) {
                         publicKey = resp.publicKey;
+                        $.cookie('publicKey', publicKey);
                     }
                     if (resp.errno != 1 && resp.errno != 2) {
                         that.container.data('loan_customer_name', name);
                         that.container.data('loan_customer_email', email);
                         that.container.data('loan_customer_phone', phone);
                         that.container.data('loan_customer_business', businessEle.val());
-
                         that.nextStep(e);
                     } else {
                         alert('Sorry we cant process your data.');
@@ -348,7 +354,6 @@ function LoanExpress(config) {
                     }
                 }
             });
-            $.cookie('current_step', stepId);
             if (indicator) {
                 $('.loan-indicators li').removeClass('active');
                 $('.loan-indicators li[data-step="' + stepId + '"]').addClass('active');
@@ -356,7 +361,7 @@ function LoanExpress(config) {
     }
     };
     this.saveStep = function(stepId, status = 'processing') {
-        if (publicKey == '') {
+        if (!publicKey || publicKey == '') {
             return this;
         }
         var data = {

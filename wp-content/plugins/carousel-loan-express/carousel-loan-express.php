@@ -1,4 +1,5 @@
 <?php
+
 /*
   Plugin Name: Carousel Loan Express
   Plugin URI: http://www.onlinebizsoft.com/
@@ -32,6 +33,9 @@ class CarouselLoanExpress {
 
         add_action("wp_ajax_cloanexpress_save", array($this, 'cloanexpress_save'));
         add_action("wp_ajax_nopriv_cloanexpress_save", array($this, 'cloanexpress_save'));
+
+        add_action("wp_ajax_cloanexpress_config", array($this, 'cloanexpress_config'));
+        add_action("wp_ajax_nopriv_cloanexpress_config", array($this, 'cloanexpress_config'));
 
         add_action("wp_ajax_create_application", array($this, 'create_application'));
         add_action("wp_ajax_nopriv_create_application", array($this, 'create_application'));
@@ -190,38 +194,41 @@ class CarouselLoanExpress {
         }
     }
 
+    public function cloanexpress_config() {
+        $data['errno'] = 0;
+        $data['public_key'] = $this->getPublicKey();
+        $data['cleconfig'] = $this->getCleConfigJson();
+        $data['msg'] = 'Success';
+        header('Access-Control-Allow-Origin: *');
+        header('Content-Type: application/json');
+        echo json_encode($data);
+        die;
+    }
+
     public function cloanexpress_js() {
         ?>
         <script type="text/javascript">
-            var cleconfig = $.parseJSON('<?php echo $this->getCleConfigJson() ?>');
-            var publicKey = '<?php echo $this->getPublicKey() ?>'
-            var loanExpress;
+            var loanExpress, publicKey;
             $(document).ready(function() {
                 if ($('.cloanexpress').length > 0) {
-                    loanExpress = new LoanExpress(cleconfig);
+                    loanExpress = new LoanExpress();
                     loanExpress.initialize();
                 }
-        <?php if (isset($_GET['_cletoken'])): ?>
-                    $('html,body').animate({scrollTop: $('.cloanexpress').offset().top - 150}, 'slow');
-        <?php endif ?>
             });
         </script>
         <?php
+
     }
 
     public function getPublicKey() {
-        $publicKey = false;
+        $publicKey = '';
         if (isset($_COOKIE['publicKey']) && strlen($_COOKIE['publicKey']) > 0) {
             $publicKey = $_COOKIE['publicKey'];
         } else {
             if (is_user_logged_in() && is_front_page()) {
                 $user = wp_get_current_user();
                 $user_id = $user->ID;
-                $appId = $this->create_app($user->ID);
-                if (!is_wp_error($appId)) {
-                    $publicKey = get_post_meta($appId, 'public_key', true);
-                    $_COOKIE['publicKey'] = $publicKey;
-                }
+                $this->create_app($user->ID);
             }
         }
         return $publicKey;
@@ -234,12 +241,18 @@ class CarouselLoanExpress {
     }
 
     public function getCleConfigJson() {
-        $_cletoken = $this->getCleToken();
-        $result = $this->getCleConfig($_cletoken);
-        if ($result) {
-            return json_decode($result->data);
-        } elseif (isset($_COOKIE[$_cletoken])) {
-            return $_COOKIE[$_cletoken];
+        $publicKey = $this->getPublicKey();
+        if ($publicKey) {
+            $app = $this->get_app($publicKey);
+            if ($app) {
+                $app_info = get_post_meta($app->ID, 'app_info', true);
+                $data = is_array($app_info) ? $app_info : array();
+                return json_encode($data);
+            } else {
+                return json_encode(array());
+            }
+        } elseif (isset($_COOKIE[$publicKey])) {
+            return $_COOKIE[$publicKey];
         } else {
             return json_encode(array());
         }
@@ -682,9 +695,7 @@ class CarouselLoanExpress {
                 if (is_wp_error($appId)) {
                     $data['msg'] = __('Cant create application');
                 } else {
-                    $publicKey = get_post_meta($appId, 'public_key',true);
-                    $_COOKIE['publicKey'] = $publicKey;
-                    $data['publicKey'] = $publicKey;
+                    $data['publicKey'] = $_COOKIE['publicKey'];
                     $data['errno'] = 3;
                     $data['msg'] = 'Application is created';
                 }
@@ -747,6 +758,7 @@ EOD;
             add_post_meta($appId, 'public_key', $public_key);
             add_post_meta($appId, 'private_key', $private_key);
             add_post_meta($appId, 'app_status', self::APP_STATUS_INIT);
+            $_COOKIE['publicKey'] = $public_key;
         }
         return $appId;
     }
