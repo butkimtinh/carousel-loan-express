@@ -33,6 +33,9 @@ class CarouselLoanExpress {
 
         add_action("wp_ajax_cloanexpress_save", array($this, 'cloanexpress_save'));
         add_action("wp_ajax_nopriv_cloanexpress_save", array($this, 'cloanexpress_save'));
+        
+        add_action("wp_ajax_cloanexpress_lenders", array($this, 'cloanexpress_lenders'));
+        add_action("wp_ajax_nopriv_cloanexpress_lenders", array($this, 'cloanexpress_lenders'));
 
         add_action("wp_ajax_cloanexpress_config", array($this, 'cloanexpress_config'));
         add_action("wp_ajax_nopriv_cloanexpress_config", array($this, 'cloanexpress_config'));
@@ -371,7 +374,6 @@ class CarouselLoanExpress {
         $app_info = isset($_POST['app']) ? $_POST['app'] : array();
         update_post_meta($post_id, 'app_info', $app_info);
         $app_lenders = isset($_POST['app_lenders']) ? $_POST['app_lenders'] : array();
-        ;
         update_post_meta($post_id, 'app_lenders', $app_lenders);
         $this->requestLenders($app_lenders, $app_info);
     }
@@ -482,6 +484,9 @@ class CarouselLoanExpress {
         );
     }
 
+    public function cloanexpress_lenders(){
+        
+    }
     public function requestLenders($lenders, $data = array()) {
         if (isset($data['loan_products'])) {
             $loan_products = array();

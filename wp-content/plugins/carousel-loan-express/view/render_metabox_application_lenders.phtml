@@ -19,24 +19,66 @@ $query = new WP_Query(array(
         ));
 if ($query->have_posts()):
     ?>
-<style type="text/css">
-    .app-lenders{
-        max-height: 200px;
-        overflow-y: auto;
-    }
-</style>
+    <style type="text/css">
+        .app-lenders{
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        .init{
+            color: #258ac5;
+            text-transform: uppercase;
+        }
+        .complete, .avaiable{
+            color: #1ea551;
+            text-transform: uppercase;
+        }
+        .failure{
+            color:#F00;
+            text-transform: uppercase;
+        }
+        .processing{
+            color: #cc3300;
+            text-transform: uppercase;
+        }
+        .unavaiable{
+            text-transform: uppercase;
+            color: gray;
+        }
+    </style>
     <ul class="app-lenders">
         <?php
-            foreach ($query->get_posts() as $p):
+        foreach ($query->get_posts() as $p):
             $checked = $app_lenders && in_array($p->ID, $app_lenders) ? 'checked="checked"' : '';
             ?> 
             <li>
                 <input type="checkbox" name="app_lenders[]"  value="<?php echo $p->ID ?>" <?php echo $checked ?>/> <?php echo $p->post_title ?>
             </li>
             <?php
-            endforeach;
+        endforeach;
         ?></ul>
     <?php
 endif;
 wp_reset_query();
 ?>
+<hr/>
+<ul>
+    <?php
+    $app_status = get_post_meta($post->ID, 'app_status', true);
+    if ($app_status) {
+        $status = '<span class="' . $app_status . '">' . $app_status . '</span>';
+    } else {
+        $status = '<span class="unavaiable">Not defined</span>';
+    }
+    ?>
+    <li><b>Status:</b> <?php echo $status ?></li>
+    <?php
+    $app_notified = get_post_meta($post->ID, 'app_notified', true);
+    if ($app_notified) {
+        $notified = '<span class="avaiable">Send notified</span>';
+    } else {
+        $notified = '<span class="unavaiable">Not notified</span>';
+    }
+    ?>
+    <li><b>Notified:</b> <?php echo $notified ?></li>    
+</ul>
+<a href="" class="button button-primary button-large">Send to lenders</a>

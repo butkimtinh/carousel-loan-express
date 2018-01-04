@@ -133,7 +133,7 @@ if (is_array($app_info)) {
     <tr>
         <td><?php _e('Loan Products:') ?></td>
         <?php
-        $selected = isset($loan_products) ? $loan_products : array();
+        $selected = isset($loan_products) ? explode(',', $loan_products) : array();
         $collection = array('Unsecured Business Loans', 'Invoice Finance', 'Line of Credit / Trade Finance', 'Equipment Finance', 'Vehicle Finance', 'Property Development Finance');
         ?>
         <td><select name="app[loan_products][]" multiple="" class="form-control full-width">
@@ -205,14 +205,13 @@ if (is_array($app_info)) {
 <script type="text/javascript">
     var loanSlider;
     jQuery(document).ready(function($) {
-        loanSlider = new LoanExpresSlider({'max': 1000000, 'min': 5000, 'step': 5000, 'start': <?php echo preg_replace('/\D/', '', $loan_amount);?>});
+        loanSlider = new LoanExpresSlider({'max': 1000000, 'min': 5000, 'step': 5000, 'start': <?php echo intval($loan_amount);?>});
         loanSlider.updatePrice = function(){
             this.slided = true;
             var val = this.loanSlider.noUiSlider.get();
             $('#loan_amount').val(this.formatCurrency(val));
         };
         loanSlider.initialize();
-        
         $('#loan_amount').change(function(){
             var amount = $(this).val();
             var number = amount.replace(/[^0-9\.]+/g,"");

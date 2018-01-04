@@ -171,10 +171,11 @@ function LoanExpress() {
         var active = $('.loan-products .active');
         that = this;
         if (active.length > 0) {
-            that.container.data('loan_products_length', active.length);
+            var products = [];
             active.each(function(index) {
-                that.container.data('loan_products[' + index + ']', $(this).data('val'));
+                products.push($(this).data('val'));
             });
+            that.container.data('loan_products', products.join());
             this.nextStep(e);
         } else {
             alert('Please select the product below');
@@ -464,11 +465,11 @@ function LoanExpress() {
             $('.loan-dob [name="birth_year"]').val(birth_year);
         }
 
-        var loan_products_length = this.container.data('loan_products_length');
-        if (loan_products_length) {
+        var products = this.container.data('loan_products').split(',');
+        if (products.length > 0) {
             $('.loan-products .step-buttons').removeClass('active');
-            for (var i = 0; i < loan_products_length; i++) {
-                var productId = this.container.data('loan_products[' + i + ']');
+            for (var i = 0; i < products.length; i++) {
+                var productId = products[i];
                 $('.loan-products [data-val="' + productId + '"]').addClass('active');
             }
         }
