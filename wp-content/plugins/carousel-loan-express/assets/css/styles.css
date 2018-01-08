@@ -476,6 +476,9 @@ table.lender-info td{
   -webkit-animation: spin 2s linear infinite; /* Safari */
   animation: spin 2s linear infinite;
 }
+.app-notify{
+    display: none;
+}
 
 /* Safari */
 @-webkit-keyframes spin {

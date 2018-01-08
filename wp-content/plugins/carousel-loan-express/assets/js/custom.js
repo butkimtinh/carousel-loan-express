@@ -7,7 +7,7 @@ $(document).ready(function() {
     $('.close').click(function() {
         $(this).closest('.modal').hide();
     });
-    $('[type="tel"]').mask('(00) 0000 0000');
+    //$('[type="tel"]').mask('(00) 0000 0000');
     $("#loan-offers-frm").validate();
     $.validator.addMethod("validphone", function(value, element) {
         var phone = value.replace(/\D/g, '');

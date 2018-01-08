@@ -12,16 +12,17 @@
  * Create at: Jan 5, 2018 7:32:51 PM
  */
 ?>
-<div id="app-frm">
-    <div class="um-field um-field-text um-field-type_text">
-        <div class="um-field-label">
-            <label for="loan_customer_name">Full Name:</label>
-            <div class="um-clear"></div>                  
+<div class="wapper_app">
+    <div id="app-frm">
+        <div class="um-field um-field-text um-field-type_text">
+            <div class="um-field-label">
+                <label for="loan_customer_name">Full Name:</label>
+                <div class="um-clear"></div>                  
+            </div>
+            <div class="um-field-area">
+                <input class="um-form-field" type="text" name="loan_customer_name" id="loan_customer_name" placeholder="Full name" value="<?php echo $loan_customer_name ?>" required=""/>
+            </div>
         </div>
-        <div class="um-field-area">
-            <input class="um-form-field" type="text" name="loan_customer_name" id="loan_customer_name" placeholder="Full name" value="<?php echo $loan_customer_name ?>" required=""/>
-        </div>
-    </div>
         <div class="um-field um-field-text um-field-type_text"/>
         <div class="um-field-label">
             <label for="loan_dob">Birthday:</label>
@@ -223,8 +224,13 @@
         <div class="um-left"><a href="javascript:void()" id="um_app_submit" class="um-button">Update Application</a> </div><div class="loaderx"></div>
         <div class="um-clear"></div>
     </div>
-    <input type="hidden" name="app_id" value="<?php echo $appId?>"/>
+    <input type="hidden" name="app_id" value="<?php echo $appId ?>"/>
 </div> 
+    <div class="alert alert-success alert-dismissible app-notify" role="alert">
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        <strong>Success!</strong> <?php _e('Your application is updated.') ?>
+    </div>
+</div>
 <script type="text/javascript">
     var loanSlider;
     jQuery(document).ready(function($) {
@@ -251,7 +257,7 @@
 
         });
 
-        $('#loan_customer_phone').mask('(00) 0000 0000');
+        //$('#loan_customer_phone').mask('(00) 0000 0000');
         $('#loan_dob').datepicker({
             format: 'dd/mm/yyyy'
         });
@@ -261,20 +267,23 @@
             if ($('.um-form form:first-child').valid()) {
                 $('.loaderx').show();
                 var formData = new FormData($('.um-form form:first-child')[0]);
-                formData.append('action','um_save_app');
+                formData.append('action', 'um_save_app');
                 formData.set('loan_amount', loanSlider.val());
                 $.ajax({
-                    url:ajaxurl,
+                    url: ajaxurl,
                     type: 'POST',
                     data: formData,
                     cache: false,
                     contentType: false,
                     processData: false,
-                    success: function (resp) {
+                    success: function(resp) {
                         $('.loaderx').hide();
+                        if(!resp.errno){
+                            $('.app-notify').show();
+                        }
                     }
                 })
-            }else{
+            } else {
                 alert('Please valid all field required');
             }
         });
