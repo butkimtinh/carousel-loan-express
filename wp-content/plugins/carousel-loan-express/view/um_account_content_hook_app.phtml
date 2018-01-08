@@ -1,0 +1,70 @@
+<?php
+/**
+ * OnlineBiz Software Solution
+ * 
+ * @project lendclick.com.au
+ * @version 0.0.1
+ * @encoding UTF-8
+ * @author Joe Vu<joe@onlinebizsoft.com>
+ * @see http://onlinebizsoft.com
+ * @copyright (c) 2017 , OnlineBiz Software Solution
+ * 
+ * Create at: Jan 5, 2018 11:26:40 AM
+ */
+$apps = $this->get_apps();
+?>
+<div class="um-account-heading uimob340-hide uimob500-hide"><i class="um-icon-card"></i>Application <?php if ($apps->post_count == 1): echo '#' . $apps->post->ID ?><?php endif ?></div>
+<hr/>
+<?php
+if ($apps == false || !$apps->have_posts()):
+    ?>
+    <div class="alert alert-warning alert-dismissible" role="alert">
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        <strong>Warning!</strong> <?php _e('Not found your application.') ?>
+    </div>
+<?php elseif ($apps->have_posts()): ?>
+    <?php if ($apps->post_count == 1): ?>
+        <?php
+        $post = $apps->post;
+        $postId = $appId = $post->ID;
+        echo $this->app_form($postId);
+        ?>
+    <?php else: ?>
+        <div class="um-field">
+            <table class="table table-striped">
+                <tr> 
+                    <th>#</th> 
+                    <th>App Name</th> 
+                    <th>Status</th> 
+                    <th>Create at</th> 
+                    <th>Update at</th> 
+                    <th>Action</th> 
+                </tr> 
+                <?php
+                $posts = $apps->get_posts();
+                foreach ($posts as $p):
+                    ?>
+                    <?php $edit_url = '/account/app?id=' . $p->ID ?>
+                    <tr> 
+                        <td><?php echo $p->ID ?></td> 
+                        <td><a href="<?php echo $edit_url ?>" title="<?php echo $p->post_title ?>"><?php echo $p->post_title ?></a></td> 
+                        <td>
+                            <?php
+                            $app_status = get_post_meta($p->ID, 'app_status', true);
+                            if ($app_status == 'complete') {
+                                echo '<span class="text-success">Complete</span>';
+                            } else {
+                                echo '<span class="text-danger">Form Not Complete</span>';
+                            }
+                            ?>
+                        </td> 
+                        <td><?php echo date('d-m-Y H:i:s', strtotime($p->post_date)) ?></td> 
+                        <td><?php echo date('d-m-Y H:i:s', strtotime($p->post_modified)) ?></td>
+                        <td><a href="<?php echo $edit_url ?>" title="<?php echo $p->post_title ?>">Edit</a></td> 
+                    </tr> 
+                <?php endforeach; ?>
+            </table>
+        </div>
+    <?php endif ?>
+    <?php
+endif?>

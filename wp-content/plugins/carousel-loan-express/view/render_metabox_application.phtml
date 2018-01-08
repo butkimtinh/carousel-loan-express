@@ -133,7 +133,7 @@ if (is_array($app_info)) {
     <tr>
         <td><?php _e('Loan Products:') ?></td>
         <?php
-        $selected = isset($loan_products) ? explode(',', $loan_products) : array();
+        $selected = is_array($loan_products) ? $loan_products:explode(',', $loan_products);
         $collection = array('Unsecured Business Loans', 'Invoice Finance', 'Line of Credit / Trade Finance', 'Equipment Finance', 'Vehicle Finance', 'Property Development Finance');
         ?>
         <td><select name="app[loan_products][]" multiple="" class="form-control full-width">
@@ -200,6 +200,10 @@ if (is_array($app_info)) {
     <tr>
         <td><?php _e('Best time to call:') ?></td>
         <td><input type="text" class="form-control full-width" id="best_time_to_reach" name="app[best_time_to_reach]" value="<?php echo isset($best_time_to_reach) ? $best_time_to_reach : '' ?>"/></td>
+    </tr>
+    <tr>
+        <td><?php _e('App link:') ?></td>
+        <td><input type="text" class="form-control full-width" value="<?php echo get_home_url(NULL, 'application').'?token='. get_post_meta($post->ID,'public_key',true) ?>"/></td>
     </tr>
 </table>
 <script type="text/javascript">

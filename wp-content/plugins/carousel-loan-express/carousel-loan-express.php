@@ -31,9 +31,12 @@ class CarouselLoanExpress {
         add_action("wp_ajax_search_lender", array($this, 'search_lender'));
         add_action("wp_ajax_nopriv_search_lender", array($this, 'search_lender'));
 
+        add_action("wp_ajax_um_save_app", array($this, 'um_save_app'));
+        add_action("wp_ajax_nopriv_um_save_app", array($this, 'um_save_app'));
+
         add_action("wp_ajax_cloanexpress_save", array($this, 'cloanexpress_save'));
         add_action("wp_ajax_nopriv_cloanexpress_save", array($this, 'cloanexpress_save'));
-        
+
         add_action("wp_ajax_cloanexpress_lenders", array($this, 'cloanexpress_lenders'));
         add_action("wp_ajax_nopriv_cloanexpress_lenders", array($this, 'cloanexpress_lenders'));
 
@@ -60,9 +63,80 @@ class CarouselLoanExpress {
         add_filter('manage_application_posts_columns', array($this, 'set_clexpress_columns'));
         add_action('manage_application_posts_custom_column', array($this, 'custom_clexpress_column'), 10, 2);
 
+        add_filter('um_account_page_default_tabs_hook', array($this, 'um_account_page_default_tabs_hook'), 15);
+        add_action('um_account_tab__app', array($this, 'um_account_tab__app'));
+        add_filter('um_account_content_hook_app', array($this, 'um_account_content_hook_app'));
+
         register_activation_hook(__FILE__, array($this, 'onActivation'));
         register_deactivation_hook(__FILE__, array($this, 'onDeactivation'));
         register_uninstall_hook(__FILE__, array(__CLASS__, 'onUninstall'));
+    }
+
+    public function um_account_page_default_tabs_hook($tabs) {
+        $tabs[100]['app'] = array(
+            'icon' => 'um-icon-card',
+            'title' => 'Application',
+            'custom' => true
+        );
+        return $tabs;
+    }
+
+    public function um_save_app() {
+        header('Access-Control-Allow-Origin: *');
+        header('Content-Type: application/json');
+        $data = array(
+            'errno' => 1,
+            'msg' => 'Sorry! 404 Not found'
+        );
+        extract($_POST);
+        if (is_numeric($app_id)) {
+            $data = array(
+                'errno' => 0,
+                'msg' => 'Success!'
+            );
+            update_post_meta($app_id, 'app_info', $_POST);
+            update_post_meta($app_id, 'app_status', self::APP_STATUS_COMPLETE);
+            wp_update_post(array(
+                'ID' => $app_id,
+                'post_modified' => date('d-m-Y H:i:s')
+            ));
+        }
+        echo json_encode($data);
+        die;
+    }
+
+    public function um_account_tab__app($info) {
+        global $ultimatemember;
+        extract($info);
+        $output = $ultimatemember->account->get_tab_output('app');
+        if ($output) {
+            echo $output;
+        }
+    }
+
+    public function um_account_content_hook_app($output) {
+        ob_start();
+        include __DIR__ . DIRECTORY_SEPARATOR . 'view' . DIRECTORY_SEPARATOR . __FUNCTION__ . '.phtml';
+        $output .= ob_get_contents();
+        ob_end_clean();
+        return $output;
+    }
+
+    public function get_apps($user_id = null) {
+        if (!is_user_member_of_blog()) {
+            return false;
+        }
+        $user_id = $user_id ? $user_id : get_current_user_id();
+        $params = array(
+            'post_status' => array('publish', 'pending'),
+            'post_type' => 'application',
+            'post_author' => $user_id,
+        );
+        if (isset($_GET['id'])) {
+            $params['p'] = (int) $_GET['id'];
+        }
+        $apps = new WP_Query($params);
+        return $apps;
     }
 
     public function set_clexpress_columns($columns) {
@@ -227,7 +301,7 @@ class CarouselLoanExpress {
         if (isset($_COOKIE['publicKey']) && strlen($_COOKIE['publicKey']) > 0) {
             $publicKey = $_COOKIE['publicKey'];
         } else {
-            if (is_user_logged_in() && is_front_page()) {
+            if (is_user_member_of_blog() && is_front_page()) {
                 $user = wp_get_current_user();
                 $user_id = $user->ID;
                 $this->create_app($user->ID);
@@ -275,19 +349,30 @@ class CarouselLoanExpress {
         wp_register_style('icheck-all', plugins_url('/assets/icheck-1.0.2/skins/all.css', __FILE__), false, '1.0.2', 'all');
         wp_register_style('cloanexpress-styles', plugins_url('/assets/css/styles.css', __FILE__), false, '0.0.1', 'all');
         add_shortcode('cloanexpress', array($this, 'toHtml'));
+        add_shortcode('cloanexpress_app_form', array($this, 'app_form_page'));
         $this->register_post_type();
+    }
+
+    public function app_form_page() {
+        $token = isset($_GET['token']) ? $_GET['token'] : '';
+        if ($this->valid_app($token)) {
+            $app = $this->get_app($token);
+            if ($app) {
+                return $this->app_form($app->ID);
+            }
+        }
     }
 
     public function enqueue_style() {
         wp_enqueue_script('noUiSlider');
         wp_enqueue_script('icheck');
         wp_enqueue_script('jquery.validate');
-        wp_enqueue_script('cloanexpress-js');
-        wp_enqueue_script('cloanexpress-custom');
         wp_enqueue_script('jquery-ui-js');
         wp_enqueue_script('jquery.cookie');
         wp_enqueue_script('jquery.mask');
         wp_enqueue_script('bootstrap.min-js');
+        wp_enqueue_script('cloanexpress-js');
+        wp_enqueue_script('cloanexpress-custom');
 
         wp_enqueue_style('noUiSlider');
         wp_enqueue_style('icheck-all');
@@ -484,9 +569,10 @@ class CarouselLoanExpress {
         );
     }
 
-    public function cloanexpress_lenders(){
+    public function cloanexpress_lenders() {
         
     }
+
     public function requestLenders($lenders, $data = array()) {
         if (isset($data['loan_products'])) {
             $loan_products = array();
@@ -643,7 +729,7 @@ class CarouselLoanExpress {
 
     public function getOfferId($user_name = '', $user_email = '') {
         $user_id = 0;
-        if (is_user_logged_in()) {
+        if (is_user_member_of_blog()) {
             $user = wp_get_current_user();
             $user_id = $user->ID;
         } else {
@@ -751,6 +837,7 @@ EOD;
             add_post_meta($appId, 'private_key', $private_key);
             add_post_meta($appId, 'app_status', self::APP_STATUS_INIT);
             add_post_meta($appId, 'app_notified', self::APP_NOT_NOTIFIED);
+            wp_update_post(array('ID' => $appId, 'post_title' => sprintf('Application #%s - %s', $appId, $title)));
             $_COOKIE['publicKey'] = $public_key;
         }
         return $appId;
@@ -843,9 +930,32 @@ EOD;
         die;
     }
 
+    public function app_form($appId) {
+        $app_info = get_post_meta($appId, 'app_info', true);
+        if (!is_array($app_info)) {
+            return;
+        }
+        extract($app_info);
+        if (is_user_logged_in()) {
+            $user = wp_get_current_user();
+            if (!isset($loan_customer_email) || !$loan_customer_email) {
+                $loan_customer_email = $user->user_email;
+            }
+            if (!isset($loan_customer_name) || !$loan_customer_name) {
+                $loan_customer_name = $user->first_name . ' ' . $user->last_name;
+            }
+        }
+        $html = '';
+        ob_start();
+        include __DIR__ . DIRECTORY_SEPARATOR . 'view' . DIRECTORY_SEPARATOR . __FUNCTION__ . '.phtml';
+        $html = ob_get_contents();
+        ob_end_clean();
+        return $html;
+    }
+
     public function app_clean($appId) {
-        delete_post_meta($appId, 'public_key');
-        delete_post_meta($appId, 'private_key');
+        //delete_post_meta($appId, 'public_key');
+        //delete_post_meta($appId, 'private_key');
         unset($_COOKIE['publicKey']);
     }
 
