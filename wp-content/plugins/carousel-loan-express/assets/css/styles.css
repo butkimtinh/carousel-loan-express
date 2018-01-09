@@ -513,3 +513,6 @@ table.lender-info td{
 .abn-val-name, .abn-val-date, .abn-val-state{
     color:#27A33D;
 }
+.um-account-name{
+    display: none;
+}
