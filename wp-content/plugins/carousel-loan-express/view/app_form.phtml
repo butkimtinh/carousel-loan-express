@@ -20,7 +20,8 @@
                 <div class="um-clear"></div>                  
             </div>
             <div class="um-field-area">
-                <input class="um-form-field" type="text" name="loan_customer_name" id="loan_customer_name" placeholder="Full name" value="<?php echo $loan_customer_name ?>" required=""/>
+                <input class="um-form-field" type="text" onkeyup="fieldOnChange(this)" onchange="fieldOnChange(this)" name="loan_customer_name" id="loan_customer_name" placeholder="Full name" value="<?php echo $loan_customer_name ?>" required=""/>
+                <i class="fa fa-check fa-input" aria-hidden="true" <?php if(isset($loan_customer_name) && strlen($loan_customer_name) > 0):?>style="display: block !important"<?php endif?>></i>
             </div>
         </div>
         <div class="um-field um-field-text um-field-type_text"/>
@@ -29,7 +30,8 @@
             <div class="um-clear"></div>                  
         </div>
         <div class="um-field-area">
-            <input class="um-form-field" type="text" name="loan_dob" id="loan_dob" value="<?php echo isset($loan_dob) ? $loan_dob : '' ?>" required=""/>
+            <input class="um-form-field" type="text" onkeyup="fieldOnChange(this)" onchange="fieldOnChange(this)" name="loan_dob" id="loan_dob" value="<?php echo isset($loan_dob) ? $loan_dob : '' ?>" required=""/>
+            <i class="fa fa-check fa-input" aria-hidden="true" <?php if(isset($loan_dob) && strlen($loan_dob) > 0):?>style="display: block !important"<?php endif?>></i>
         </div> 
     </div>
     <div class="um-field um-field-text um-field-type_text">
@@ -38,7 +40,8 @@
             <div class="um-clear"></div>                  
         </div>
         <div class="um-field-area">
-            <input class="um-form-field " type="text" name="loan_customer_email" value="<?php echo $loan_customer_email ?>" id="loan_customer_email" placeholder="Email address" required=""/>
+            <input class="um-form-field " type="text" onkeyup="fieldOnChange(this)" onchange="fieldOnChange(this)" name="loan_customer_email" value="<?php echo $loan_customer_email ?>" id="loan_customer_email" placeholder="Email address" required=""/>
+            <i class="fa fa-check fa-input" aria-hidden="true" <?php if(isset($loan_customer_email) && strlen($loan_customer_email) > 0):?>style="display: block !important"<?php endif?>></i>
         </div>
     </div>
     <div class="um-field um-field-text um-field-type_text">
@@ -47,16 +50,32 @@
             <div class="um-clear"></div>                  
         </div>
         <div class="um-field-area">
-            <input class="um-form-field" type="text" name="loan_customer_phone" id="loan_customer_phone"  value="<?php echo isset($loan_customer_phone) ? $loan_customer_phone : '' ?>" required=""/>
+            <input class="um-form-field" type="text" onkeyup="fieldOnChange(this)" onchange="fieldOnChange(this)" name="loan_customer_phone" id="loan_customer_phone"  value="<?php echo isset($loan_customer_phone) ? $loan_customer_phone : '' ?>" required=""/>
+            <i class="fa fa-check fa-input" aria-hidden="true" <?php if(isset($loan_customer_phone) && strlen($loan_customer_phone) > 0):?>style="display: block !important"<?php endif?>></i>
         </div>
     </div>
+    <?php
+    $abn_info = array();
+    if (isset($loan_abn)) {
+        $abn_info = $this->getAbnInfo($loan_abn);
+    }
+    ?>
     <div class="um-field  um-field-text um-field-type_text" >
         <div class="um-field-label">
             <label for="first_name">ABN:</label>
             <div class="um-clear"></div>                  
         </div>
-        <div class="um-field-area">
-            <input  class="um-form-field " type="text" name="loan_abn" id="loan_abn" placeholder="ABN" value="<?php echo isset($loan_abn) ? $loan_abn : '' ?>"/>
+        <div class="um-field-area abn-wapepr">
+            <input  class="um-form-field " type="text" onkeyup="abnChange(this)" onchange="abnChange(this)" name="loan_abn" id="loan_abn" placeholder="ABN" value="<?php echo isset($loan_abn) ? $loan_abn : '' ?>"/>
+            <i class="fa fa-check fa-input" aria-hidden="true"></i>
+            <span class="loadding">Please wait...</span>
+            <span class="abn-search-link"><?php _e('Not sure? Try search for your ABN') ?> <a style="text-decoration:underline" href="http://abr.business.gov.au" target="_blank">here</a></span>
+            <span class="error"><?php _e('Enter a valid ABN number') ?></span>
+            <ul class="app-abn-info" style="display: <?php if ($abn_info): ?>block<?php else: ?>none<?php endif ?>">
+                <li><span class="label-abn"><i class="fa fa-check" style="display: inline !important; position: initial!important" aria-hidden="true"></i> <?php _e('Business Legal Name') ?></span>: <span class="abn-val-name"><?php echo isset($abn_info['bussiness']) ? $abn_info['bussiness']['name'] : '' ?></span></li>
+                <li><span class="label-abn"><i class="fa fa-check" style="display: inline !important;  position: initial!important" aria-hidden="true"></i> <?php _e('Registration Date') ?></span>: <span class="abn-val-date"><?php echo isset($abn_info['bussiness']) ? $abn_info['bussiness']['effectiveFrom'] : '' ?></span></li>
+                <li><span class="label-abn"><i class="fa fa-check" style="display: inline !important;  position: initial!important" aria-hidden="true"></i> <?php _e('State') ?></span>: <span class="abn-val-state"><?php echo isset($abn_info['bussiness']) ? $abn_info['bussiness']['stateName'] : '' ?></span></li>
+            </ul>            
         </div>
     </div>
     <div class="um-field  um-field-text um-field-type_text" >
@@ -65,7 +84,8 @@
             <div class="um-clear"></div>                  
         </div>
         <div class="um-field-area">
-            <input  class="um-form-field " type="text" name="loan_customer_business" id="loan_customer_business" placeholder="Business Name" value="<?php echo isset($loan_customer_business) ? $loan_customer_business : '' ?>"/>
+            <input  class="um-form-field " type="text" onkeyup="fieldOnChange(this)" onchange="fieldOnChange(this)" name="loan_customer_business" id="loan_customer_business" placeholder="Business Name" value="<?php echo isset($loan_customer_business) ? $loan_customer_business : '' ?>"/>
+            <i class="fa fa-check fa-input" aria-hidden="true" <?php if(isset($loan_customer_business) && strlen($loan_customer_business) > 0):?>style="display: block !important"<?php endif?>></i>
         </div>
     </div>
     <div class="um-field  um-field-text um-field-type_text" >
@@ -207,7 +227,8 @@
             <div class="um-clear"></div>                  
         </div>
         <div class="um-field-area">
-            <input  class="um-form-field " type="text" value="<?php echo isset($business_phone_number) ? $business_phone_number : '' ?>" name="business_phone_number" id="business_phone_number" placeholder="Additional contact number" >
+            <input  class="um-form-field " type="text" onkeyup="fieldOnChange(this)" onchange="fieldOnChange(this)"  value="<?php echo isset($business_phone_number) ? $business_phone_number : '' ?>" name="business_phone_number" id="business_phone_number" placeholder="Additional contact number" >
+            <i class="fa fa-check fa-input" aria-hidden="true" <?php if(isset($business_phone_number) && strlen($business_phone_number) > 0):?>style="display: block !important"<?php endif?>></i>
         </div>
     </div>
     <div class="um-field  um-field-text um-field-type_text" >
@@ -216,23 +237,59 @@
             <div class="um-clear"></div>                  
         </div>
         <div class="um-field-area">
-            <input  class="um-form-field " type="text"  value="<?php echo isset($best_time_to_reach) ? $best_time_to_reach : '' ?>" name="best_time_to_reach" id="best_time_to_reach" placeholder="Best time to call" >
+            <input  class="um-form-field " type="text" onkeyup="fieldOnChange(this)" onchange="fieldOnChange(this)" value="<?php echo isset($best_time_to_reach) ? $best_time_to_reach : '' ?>" name="best_time_to_reach" id="best_time_to_reach" placeholder="Best time to call" >
+            <i class="fa fa-check fa-input" aria-hidden="true" <?php if(isset($best_time_to_reach) && strlen($best_time_to_reach) > 0):?>style="display: block !important"<?php endif?>></i>
         </div>
     </div> 
-
     <div class="um-col-alt um-col-alt-b">
-        <div class="um-left"><a href="javascript:void()" id="um_app_submit" class="um-button">Update Application</a> </div><div class="loaderx"></div>
+        <div class="um-left"><a href="javascript:void()" id="um_app_submit" class="um-button btn btn-default">Update Application</a> </div><div class="loaderx"></div>
         <div class="um-clear"></div>
     </div>
     <input type="hidden" name="app_id" value="<?php echo $appId ?>"/>
 </div> 
-    <div class="alert alert-success alert-dismissible app-notify" role="alert">
-        <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-        <strong>Success!</strong> <?php _e('Your application is updated.') ?>
-    </div>
+<div class="alert alert-success alert-dismissible app-notify" role="alert">
+    <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+    <strong>Success!</strong> <?php _e('Your application is updated.') ?>
+</div>
 </div>
 <script type="text/javascript">
     var loanSlider;
+
+    function fieldOnChange(e) {
+        if ($(e).valid() == true) {
+            $(e).closest('.um-field-area').find('.fa-input').css({display: 'block'});
+        } else {
+            $(e).closest('.um-field-area').find('.fa-input').css({display: 'none'});
+        }
+    }
+
+    function abnChange(e) {
+        var q = $(e).val();
+        if (q.length) {
+            $('.abn-search-link').hide();
+            $('.loadding').show();
+            $('.abn-wapepr .error').hide();
+            $.ajax({
+                type: 'POST',
+                url: ajaxurl,
+                data: {action: 'get_abn_info', q: q},
+                success: function(resp) {
+                    $('.loadding').hide();
+                    if (!resp.errno) {
+                        $('.abn-wapepr .abn-val-name').html(resp.bussiness.name);
+                        $('.abn-wapepr .abn-val-date').html(resp.bussiness.effectiveFrom);
+                        $('.abn-wapepr .abn-val-state').html(resp.bussiness.stateName);
+                        $('.abn-wapepr .app-abn-info').show();
+                        $('.abn-wapepr .error').hide();
+                    } else {
+                        $('.abn-wapepr .app-abn-info').hide();
+                        $('.abn-wapepr .error').show();
+                    }
+                }
+            });
+        }
+    }
+
     jQuery(document).ready(function($) {
         loanSlider = new LoanExpresSlider({'max': 1000000, 'min': 5000, 'step': 5000, 'start': <?php echo intval($loan_amount); ?>});
         loanSlider.updatePrice = function() {
@@ -263,6 +320,7 @@
         });
         $('#loan_dob').mask("00/00/0000", {placeholder: "__/__/____"});
         $('.um-form form:first-child').validate();
+        $('.um-form')
         $('#um_app_submit').click(function() {
             if ($('.um-form form:first-child').valid()) {
                 $('.loaderx').show();
@@ -278,7 +336,7 @@
                     processData: false,
                     success: function(resp) {
                         $('.loaderx').hide();
-                        if(!resp.errno){
+                        if (!resp.errno) {
                             $('.app-notify').show();
                         }
                     }

@@ -14,7 +14,7 @@ $(document).ready(function() {
         return /^(0(2|3|4|7|8))?\d{8}$/.test(phone) || /^1(3|8)00\d{6}$/.test(phone) || /^13\d{4}$/.test(phone);
     }, "Your phone is not valid");
     $('[type="tel"]').rules("add", {
-        minlength: 14,
+        minlength: 10,
         validphone: true,
     });
 });

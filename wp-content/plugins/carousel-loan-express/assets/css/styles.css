@@ -490,3 +490,26 @@ table.lender-info td{
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
 }
+#app-frm input[type="text"]{
+    border: 2px solid #ddd !important;
+}
+#app-frm .um-field-area{
+    position: relative;
+}
+#app-frm .um-field-area .fa-input{
+    position: absolute;
+    right: 10px;
+    top: 10px;
+    display: none;
+    color: #00cc00;
+}
+.app-abn-info{
+    list-style: none;
+    margin: 0; padding: 0;
+}
+.abn-wapepr .error, .abn-wapepr .loadding{
+    display: none;
+}
+.abn-val-name, .abn-val-date, .abn-val-state{
+    color:#27A33D;
+}

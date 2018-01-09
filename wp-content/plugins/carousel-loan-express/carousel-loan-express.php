@@ -98,6 +98,7 @@ class CarouselLoanExpress {
             update_post_meta($app_id, 'app_status', self::APP_STATUS_COMPLETE);
             wp_update_post(array(
                 'ID' => $app_id,
+                'post_title' => 'Application #'.$app_id,
                 'post_modified' => date('d-m-Y H:i:s')
             ));
         }
@@ -130,7 +131,7 @@ class CarouselLoanExpress {
         $params = array(
             'post_status' => array('publish', 'pending'),
             'post_type' => 'application',
-            'post_author' => $user_id,
+            'author' => $user_id,
         );
         if (isset($_GET['id'])) {
             $params['p'] = (int) $_GET['id'];
@@ -646,13 +647,13 @@ class CarouselLoanExpress {
         $params->authenticationGuid = $guid;
         if ($result = $soap->ABRSearchByABN($params)) {
             $respone = $result->ABRPayloadSearchResults->response;
-            if ($respone->exception) {
+            if (property_exists($respone, 'exception')&& $respone->exception) {
                 $data['msg'] = $respone->exception->exceptionDescription;
             } else {
                 if ($businessEntity = $respone->businessEntity) {
-                    if ($businessEntity->legalName) {
+                    if (property_exists($respone, 'legalName') && $businessEntity->legalName) {
                         $name = $businessEntity->legalName;
-                    } elseif ($businessEntity->mainTradingName) {
+                    } elseif (property_exists ($businessEntity, 'mainTradingName') && $businessEntity->mainTradingName) {
                         $name = $businessEntity->mainTradingName->organisationName;
                     } elseif ($businessEntity->mainName) {
                         $name = $businessEntity->mainName->organisationName;
@@ -1225,12 +1226,12 @@ EOD;
                 $email = $loan_customer_email;
                 $phone = preg_replace('/\D/', '', $loan_customer_phone);
                 $link = get_home_url(NULL, 'account/app') . '?id=' . $appID;
-
+                $login_url = get_home_url(NULL, 'login').'?redirect_to='.urlencode($link);
                 $params = array(
                     'appId' => $appID,
                     'email' => $email,
                     'phone' => $phone,
-                    'content' => sprintf('Please complete this form: <a href="%s" target="_blank">%s</a>', $link, $link),
+                    'content' => sprintf('Please complete <a href="%s" target="_blank">this form</a>', $login_url),
                     'status' => self::APP_STATUS_FAILURE,
                     'source' => __('LendClick application Failure - Application #' . $appID)
                 );
